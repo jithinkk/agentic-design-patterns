@@ -1,300 +1,121 @@
-# 🤖 Agentic Design Patterns - Exploratory Sandbox
+# Agentic Design Patterns — LangGraph Prototypes
 
-A comprehensive exploration and implementation of agentic AI design patterns using **LangGraph**, **LangChain**, and modern LLM frameworks. This sandbox provides hands-on implementations of cutting-edge autonomous agent architectures.
+Working, tested LangGraph implementations of the six agentic design
+patterns from Anthropic's ["Building Effective
+Agents"](https://www.anthropic.com/research/building-effective-agents):
+five fixed **workflows** (prompt chaining, routing, parallelization,
+orchestrator-workers, evaluator-optimizer) and one open-ended **agent**
+loop (ReAct). Each pattern is a small, self-contained LangGraph
+`StateGraph` you can read start to finish in a couple of minutes, run from
+the CLI, and poke at in tests — the goal is to understand each pattern
+*inside out*, not to ship a framework.
 
-## 📋 Overview
+Every pattern runs and is unit-tested **with no API key and no network
+access**, against a small deterministic fake chat model. Point it at a
+real model with one environment variable when you want to.
 
-This project is a **research and experimentation platform** for understanding how to build sophisticated autonomous agents. It includes multiple design patterns, each demonstrating different approaches to agent reasoning, planning, and execution.
+## Patterns
 
-### Key Capabilities
-- **Multi-pattern architecture**: Compare and contrast different agentic approaches
-- **LangGraph-based workflows**: Production-ready graph-based state management
-- **Tool integration**: Seamless execution of custom tools and external APIs
-- **Memory systems**: Context management and conversation history
-- **Guardrails**: Safety constraints and output validation
-- **Multi-LLM support**: OpenAI, Hugging Face, and more
+| Pattern | Shape | What it shows |
+|---|---|---|
+| [`prompt_chaining`](patterns/prompt_chaining) | linear chain + a gate | decomposing a task into sequential LLM calls with a programmatic checkpoint between them |
+| [`routing`](patterns/routing) | classify → dispatch | sending different inputs to specialized prompts instead of one generic one |
+| [`parallelization`](patterns/parallelization) | fan-out → fan-in | running independent LLM calls concurrently and joining the results |
+| [`orchestrator_workers`](patterns/orchestrator_workers) | dynamic fan-out via `Send` | when the *number* of parallel subtasks is decided by the model at runtime |
+| [`evaluator_optimizer`](patterns/evaluator_optimizer) | generate ⇄ evaluate loop | iterative refinement against explicit pass/fail criteria |
+| [`react_agent`](patterns/react_agent) | tool-call loop | the open-ended "agent": the model decides whether to act or answer, turn by turn |
 
-## 🏗️ Architecture
+Each pattern's own README has its graph diagram and an explanation of why
+that shape fits that pattern. Start with `prompt_chaining` (simplest) and
+end with `react_agent` (least predictable).
+
+## Quick start
+
+Requires Python 3.13+ and [`uv`](https://docs.astral.sh/uv/).
+
+```bash
+uv sync
+uv run main.py list
+uv run main.py run react-agent "What is (12 + 8) * 3?"
+uv run main.py run prompt-chaining "Why LangGraph is a good fit for agents"
+```
+
+Or activate the venv and use `python` directly:
+
+```bash
+source .venv/bin/activate
+python main.py run evaluator-optimizer "Write a tagline for Nimbus"
+python -m patterns.orchestrator_workers.run "Write a report covering pricing, onboarding, and support quality."
+```
+
+## Running against a real model
+
+By default every pattern uses `shared/llm/fake.py`'s `FakeChatModel` — a
+scripted stand-in that lets the whole repo run offline. To use a real
+model instead, set an API key and, optionally, `LLM_PROVIDER`:
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...   # or OPENAI_API_KEY=sk-...
+export LLM_PROVIDER=anthropic         # or "openai"; auto-detected from the key if omitted
+uv run main.py run react-agent "What's a good LangGraph pattern for a support bot?"
+```
+
+See `shared/llm/factory.py` for provider selection and `ANTHROPIC_MODEL` /
+`OPENAI_MODEL` overrides.
+
+## Testing
+
+```bash
+uv run pytest            # every pattern, all offline
+uv run pytest patterns/orchestrator_workers -v
+```
+
+## Project layout
 
 ```
 agentic-design-patterns/
-├── patterns/                      # Core agentic pattern implementations
-│   ├── langgraph_react/          # ReAct pattern with LangGraph
-│   ├── planner_executor/         # Planner-executor pattern
-│   └── react_agent/              # React agent implementation
-├── shared/                        # Shared utilities and infrastructure
-│   ├── guardrails/               # Safety constraints and validators
-│   ├── llm/                       # LLM integrations (OpenAI, HF, etc.)
-│   ├── memory/                   # Memory and context management
-│   └── tools/                    # Tool definitions and executors
-├── notebooks/                     # Jupyter exploratory notebooks
-├── experiments/                   # Experimental implementations
-└── main.py                        # Entry point
+├── main.py                        # Typer CLI: list/run patterns
+├── patterns/
+│   ├── prompt_chaining/
+│   ├── routing/
+│   ├── parallelization/
+│   ├── orchestrator_workers/
+│   ├── evaluator_optimizer/
+│   └── react_agent/
+│       ├── graph.py                # StateGraph wiring: nodes + edges
+│       ├── nodes.py                # node functions + the fake-LLM script for this pattern
+│       ├── run.py                  # `main()` + CLI entry point
+│       ├── tests/test_*.py         # deterministic end-to-end tests
+│       └── README.md               # pattern-specific diagram + notes
+└── shared/
+    ├── llm/
+    │   ├── factory.py               # get_chat_model(provider=...) — fake / openai / anthropic
+    │   └── fake.py                  # FakeChatModel: scripted BaseChatModel, no network needed
+    └── tools/
+        └── basic.py                 # calculator, search_docs, word_count (used by react_agent)
 ```
 
-## 📦 Design Patterns Included
-
-### 1. **LangGraph ReAct** (`patterns/langgraph_react/`)
-ReAct (Reasoning + Acting) pattern using LangGraph's graph-based state management.
-- **What it does**: Iteratively reasons about tasks and takes actions
-- **Best for**: Complex multi-step reasoning, tool-heavy workflows
-- **Key files**: `graph.py`, `nodes.py`, `run.py`
-
-### 2. **Planner-Executor** (`patterns/planner_executor/`)
-Separates planning from execution for more structured task completion.
-- **What it does**: First plans actions, then executes them sequentially
-- **Best for**: Deterministic workflows, task decomposition
-- **Key files**: Task planning and execution modules
-
-### 3. **React Agent** (`patterns/react_agent/`)
-Standard ReAct agent pattern with flexible tool integration.
-- **What it does**: Agent loops through reasoning and tool calls
-- **Best for**: General-purpose autonomous tasks
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Python 3.13+
-- `uv` package manager (recommended) or `pip`
-- API keys for LLM providers (OpenAI, etc.)
-
-### Installation
-
-```bash
-# Clone the repository
-git clone <your-repo-url>
-cd agentic-design-patterns
-
-# Install dependencies using uv
-uv sync
-
-# Or using pip
-pip install -e .
-```
-
-### Setup Environment
-
-Create a `.env` file with your API keys:
-
-```env
-OPENAI_API_KEY=sk-your-key-here
-HUGGINGFACE_API_KEY=hf_your-key-here
-```
-
-### Run Examples
-
-```bash
-# Run the main entry point
-python main.py
-
-# Run specific pattern
-cd patterns/langgraph_react
-python run.py
-
-# Explore in Jupyter
-jupyter notebook notebooks/
-```
-
-## 🔧 Project Structure Details
-
-### `shared/` - Shared Infrastructure
-
-- **`llm/`** - Language model integrations
-  - `hf_llm.py` - Hugging Face model wrapper
-  - Support for OpenAI, local models, etc.
-
-- **`memory/`** - Context and conversation management
-  - Session memory
-  - Conversation history
-  - Context windows
-
-- **`tools/`** - Tool definitions and execution
-  - Tool registry
-  - Tool executors
-  - Integration with external APIs
-
-- **`guardrails/`** - Safety and validation
-  - Output validators
-  - Input sanitizers
-  - Policy enforcement
-
-### `patterns/` - Design Pattern Implementations
-
-Each pattern is self-contained with:
-- `graph.py` - Graph/workflow definition
-- `nodes.py` - Node implementations (agent logic)
-- `run.py` - Executable entry point for testing
-
-### `notebooks/` - Exploratory Analysis
-
-Interactive Jupyter notebooks for:
-- Pattern comparison
-- Behavior analysis
-- Debugging and visualization
-- Ad-hoc experimentation
-
-## 📚 Usage Examples
-
-### Running the LangGraph ReAct Pattern
-
-```python
-from patterns.langgraph_react.run import run_agent
-
-result = run_agent(
-    task="Find the capital of France and tell me about it",
-    max_iterations=10
-)
-print(result)
-```
-
-### Building Your Own Pattern
-
-```python
-from langgraph.graph import StateGraph, START, END
-from typing import TypedDict
-
-class State(TypedDict):
-    messages: list
-    tools_called: list
-
-# Define your state graph
-builder = StateGraph(State)
-builder.add_node("reason", my_reasoning_node)
-builder.add_node("act", my_action_node)
-
-graph = builder.compile()
-result = graph.invoke({"messages": [...]})
-```
-
-## 🧪 Development
-
-### Running Tests
-
-```bash
-pytest tests/
-pytest --cov=patterns --cov=shared
-```
-
-### Code Quality
-
-```bash
-# Format code
-ruff format .
-
-# Lint
-ruff check .
-
-# Type checking
-pyright
-```
-
-### Adding a New Pattern
-
-1. Create a new directory in `patterns/`
-2. Implement `graph.py` with your state graph
-3. Implement `nodes.py` with your logic
-4. Create `run.py` as an executable example
-5. Add tests and documentation
-
-## 📖 Key Concepts
-
-### State Graph Pattern
-All patterns use **LangGraph's StateGraph** for managing agent workflows:
-- Defines a `State` TypedDict for data flow
-- Adds nodes for different computation steps
-- Connects nodes with edges
-- Compiles into an executable graph
-
-### Tool Integration
-Tools are integrated through:
-- Tool definitions (schema, description, function)
-- Tool executors (safely run tools)
-- Tool memory (track tool calls)
-- Result integration (feed results back to agent)
-
-### Agent Loop
-Standard agentic loop:
-1. **Observe** - Process current state and available information
-2. **Reason** - Use LLM to decide next action
-3. **Act** - Execute tools or generate output
-4. **Update** - Incorporate results into state
-5. **Repeat** - Until goal reached or max iterations exceeded
-
-## 🔌 Integrations
-
-### LLM Providers
-- **OpenAI** - GPT-4, GPT-3.5
-- **Hugging Face** - Local and API-based models
-- **Other**: LLaMA, Mixtral, etc. via LangChain
-
-### Tools & APIs
-- Web search
-- Code execution
-- File operations
-- Custom integrations
-
-### Memory
-- Conversation history
-- Session context
-- Long-term memory stores
-
-## 📊 Performance & Best Practices
-
-- **Minimize LLM calls**: Cache results, use embeddings
-- **Token efficiency**: Summarize context, use few-shot examples
-- **Tool reliability**: Validate tool outputs, implement retries
-- **Safety first**: Use guardrails for high-stakes applications
-- **Observability**: Log agent reasoning and actions
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-**API key not found**
-```bash
-# Verify .env file exists and contains:
-cat .env
-# OPENAI_API_KEY=sk-...
-```
-
-**Import errors**
-```bash
-# Reinstall package in development mode
-pip install -e .
-```
-
-**LangGraph version conflicts**
-```bash
-# Check dependencies
-pip show langgraph
-# Update if needed
-pip install --upgrade langgraph
-```
-
-## 📚 Resources
-
-- [LangGraph Documentation](https://langchain-ai.github.io/langgraph/)
-- [LangChain Documentation](https://python.langchain.com/)
-- [ReAct Paper](https://arxiv.org/abs/2210.03629)
-- [Agent Design Patterns](https://www.promptengineering.org/)
-
-## 🤝 Contributing
-
-Contributions welcome! Areas for exploration:
-- New agentic patterns (Tree of Thought, HyDE, etc.)
-- Additional tool integrations
-- Improved guardrails and safety
-- Performance optimizations
-- Documentation and examples
-
-## 📝 License
-
-[Add your license here]
-
-## 🙋 Support
-
-For issues, questions, or pattern suggestions, please open an issue or discussion.
-
----
-
-**Happy exploring! 🚀**
+Every pattern follows the same shape: `graph.py` defines the `StateGraph`
+and its edges, `nodes.py` holds the node functions (each backed by
+`shared.llm.factory.get_chat_model`), `run.py` exposes a `main(...)`
+function the CLI calls into, and `tests/` exercises the graph end to end
+against the fake LLM.
+
+### Adding a new pattern
+
+1. `mkdir -p patterns/<name>/tests` with `__init__.py` files.
+2. Write `nodes.py`: node functions plus a `_fake_responder` that gives
+   deterministic behavior for tests (see any existing pattern for the
+   shape), wired up via `get_chat_model(responder=_fake_responder)`.
+3. Write `graph.py`: a `TypedDict` state and a `build_graph()` that wires
+   nodes with `add_edge` / `add_conditional_edges`.
+4. Write `run.py` with a `main(...)` function and a CLI-runnable
+   `if __name__ == "__main__"` block.
+5. Add tests in `tests/test_<name>.py` and register the pattern in
+   `main.py`'s `PATTERNS` dict.
+
+## Resources
+
+- [Building Effective Agents (Anthropic)](https://www.anthropic.com/research/building-effective-agents) — the taxonomy this repo follows
+- [LangGraph documentation](https://langchain-ai.github.io/langgraph/)
+- [ReAct: Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629)
