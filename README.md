@@ -25,9 +25,13 @@ real model with one environment variable when you want to.
 | [`evaluator_optimizer`](patterns/evaluator_optimizer) | generate ⇄ evaluate loop | iterative refinement against explicit pass/fail criteria |
 | [`react_agent`](patterns/react_agent) | tool-call loop | the open-ended "agent": the model decides whether to act or answer, turn by turn |
 
-Each pattern's own README has its graph diagram and an explanation of why
-that shape fits that pattern. Start with `prompt_chaining` (simplest) and
-end with `react_agent` (least predictable).
+Each pattern's own README has a Mermaid diagram of its graph plus notes on
+where it fits, where it doesn't, architectural tradeoffs, production infra
+choices, production readiness, and relevant open-source components. Start
+with `prompt_chaining` (simplest) and end with `react_agent` (least
+predictable). For the cross-pattern view — a decision tree for picking
+between them and a latency/cost/risk comparison table — see
+[`docs/architecture-overview.md`](docs/architecture-overview.md).
 
 ## Quick start
 
@@ -75,6 +79,8 @@ uv run pytest patterns/orchestrator_workers -v
 ```
 agentic-design-patterns/
 ├── main.py                        # Typer CLI: list/run patterns
+├── docs/
+│   └── architecture-overview.md   # cross-pattern decision tree + comparison table
 ├── patterns/
 │   ├── prompt_chaining/
 │   ├── routing/
