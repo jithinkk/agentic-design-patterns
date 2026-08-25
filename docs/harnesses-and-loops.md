@@ -6,9 +6,10 @@ a real coding agent (Claude Code, and agent harnesses like it) wraps those
 shapes into something that runs safely, for hours, across sessions, with a
 human able to step in, its behavior checked before it ships. It's the "so
 what does this look like outside a demo repo" page: the loop, the harness
-around it, and three things every production agent system needs beyond
-the loop — memory, guardrails, and evals (context engineering is folded
-into memory below, since it's largely the same problem).
+around it, and four things every production agent system needs beyond
+the loop — memory, guardrails, tool integration at scale (MCP), and evals
+(context engineering is folded into memory below, since it's largely the
+same problem).
 
 **This page is deliberately not a proposal for eight more patterns.** The
 seven graphs stay the focus of this repo; what follows is what a
@@ -173,6 +174,91 @@ That's the cheapest guardrail this repo could add next: one keyword
 argument, `app.invoke(..., config={"recursion_limit": N})`, on every
 agent-loop pattern (`react_agent`, `human_in_the_loop`).
 
+The tool-call and tool-response rows above assume tools you wrote and
+reviewed yourself, like this repo's `shared/tools/basic.py`. That
+assumption stops holding the moment tools come from somewhere else —
+see below.
+
+## Tool integration at scale: MCP
+
+**Not implemented in this repo's code, and not planned to be.** No MCP
+client, no new dependency, nothing importable — this section is
+documentation only, describing how the pattern shapes here relate to a
+real integration, not a feature this repo ships. If you came here looking
+for `shared/tools/mcp.py`, it doesn't exist and isn't the point.
+
+**What MCP is, briefly.** The [Model Context
+Protocol](https://modelcontextprotocol.io/) is a standardized
+client-server protocol for exposing tools (and resources, and prompts) to
+LLM agents. Instead of every agent framework needing its own hand-rolled
+wrapper per external system, a tool integration is written once as an MCP
+server, and any MCP-compatible client — Claude Code included, at its own
+tool-integration boundary — can discover and call it the same way.
+
+**What changes in this repo's patterns, and what doesn't.** Nothing about
+the *graph shape*. Verified directly against `langchain-mcp-adapters`'
+own usage example — its LangGraph wiring is `StateGraph` +
+`MessagesState` + `ToolNode` + `tools_condition`, the exact same four
+pieces `react_agent/graph.py` uses. The only line that changes is where
+the tool list comes from:
+
+```python
+# This repo's react_agent (shared/tools/basic.py, local & hand-written):
+from shared.tools.basic import ALL_TOOLS
+builder.add_node("tools", ToolNode(ALL_TOOLS))
+
+# The MCP equivalent (sketched, not in this repo):
+from langchain_mcp_adapters.client import MultiServerMCPClient
+client = MultiServerMCPClient({
+    "internal-crm": {"url": "https://mcp.internal/crm", "transport": "http"},
+    "filesystem": {"command": "npx", "args": ["-y", "@modelcontextprotocol/server-filesystem", "."], "transport": "stdio"},
+})
+tools = await client.get_tools()  # discovered at runtime, not hand-written
+builder.add_node("tools", ToolNode(tools))
+# Everything else -- the agent node, tools_condition, the edges -- is unchanged.
+```
+
+That's the whole point of a protocol boundary: `react_agent`,
+`human_in_the_loop`, and `orchestrator_workers` don't need to know or
+care whether a tool is a three-line local Python function or a call to a
+remote MCP server. The pattern shapes in this repo are already correct
+for both.
+
+**Why this repo doesn't do it anyway.** Every pattern here is built to
+run fully offline, deterministically, against a scripted fake model, with
+no network access required to clone-and-test — that's the whole premise
+behind `shared/llm/fake.py`. MCP is a live client-server protocol; there's
+no equally lightweight way to fake an entire external tool server the way
+`FakeChatModel` fakes an LLM call. Wiring MCP in would mean either a real
+running server as a test dependency (breaking the "no network access"
+guarantee every pattern currently has) or a second, parallel fake-server
+layer just for MCP — a maintenance cost this teaching repo doesn't take on.
+
+**Why this matters more than an integration convenience, per the
+Guardrails section above.** MCP tool servers are, as of 2026, a genuinely
+dangerous unaudited surface at real production scale — this isn't a
+hypothetical:
+
+- An April 2026 supply-chain report identified a systemic vulnerability
+  in MCP's STDIO transport affecting **150 million downstream package
+  downloads**, across over 7,000 publicly accessible MCP servers, with an
+  estimated 200,000 vulnerable instances.
+- A July 2026 measurement study of internet-facing MCP servers found
+  **91.8% of 640 audited production servers had no OAuth**, and 687
+  instances exposed unrestricted shell tool access.
+
+Every tool call from an MCP server lands at exactly the "tool call" and
+"tool response" rows in the Guardrails table above — except now the tool
+wasn't written by you, wasn't reviewed by you, and its server may not
+even authenticate its own callers. This is precisely the scenario
+`human_in_the_loop`'s approval gate exists for, and it argues for
+inverting this repo's toy version of it: `TOOLS_REQUIRING_APPROVAL` here
+is a hand-picked allowlist of one tool because there are only four tools
+total and we wrote all of them. Against a dynamically-discovered set of
+MCP tools from third-party servers, the safe default flips — gate
+everything by default, and explicitly allowlist only tools from servers
+you've actually reviewed.
+
 ## Evals — not the same thing as `evaluator_optimizer`
 
 These two ideas share a name and get confused constantly:
@@ -224,3 +310,7 @@ model (this repo has none of that).
 - [Harness engineering for coding agent users (Martin Fowler)](https://martinfowler.com/articles/harness-engineering.html)
 - [awesome-harness-engineering](https://github.com/ai-boost/awesome-harness-engineering) — curated list of harness engineering tools and patterns
 - [15 Production Design Patterns for Agentic AI Systems — Reliability Catalog 2026](https://medium.com/@wasowski.jarek/building-reliable-ai-agents-catalog-of-15-production-patterns-agentic-design-patterns-3cff554cbb70) — the four-point guardrail model (input / tool call / tool response / output) and bounded execution
+- [Model Context Protocol](https://modelcontextprotocol.io/) — the protocol itself
+- [langchain-mcp-adapters](https://pypi.org/project/langchain-mcp-adapters/) — the MCP↔LangGraph bridge whose usage example this page's code sketch is verified against
+- [6 Critical Challenges Facing the MCP in 2026 (Medium)](https://medium.com/@MattLeads/6-critical-challenges-facing-the-mcp-in-2026-06258e914402) — the "MCP Paradox": integration speed outpacing security guardrails
+- [A First Measurement Study on Authentication Security in Real-World Remote MCP Servers](https://arxiv.org/pdf/2605.22333) — the 91.8%-no-OAuth / unrestricted-shell-access findings cited above

@@ -10,8 +10,8 @@ key) to run a pattern against a real model instead.
 
 These graphs are demos of seven patterns' *shape*, not production
 systems -- see docs/harnesses-and-loops.md for how each one relates to a
-real agent harness, and for memory/guardrails/evals, the production
-infrastructure these graphs don't provide on their own.
+real agent harness, and for memory/guardrails/MCP tool integration/evals,
+the production infrastructure these graphs don't provide on their own.
 """
 
 from __future__ import annotations
