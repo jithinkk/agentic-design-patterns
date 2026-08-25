@@ -139,3 +139,7 @@ against the fake LLM.
 - [Effective harnesses for long-running agents (Anthropic)](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)
 - [LangGraph documentation](https://langchain-ai.github.io/langgraph/)
 - [ReAct: Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629)
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
