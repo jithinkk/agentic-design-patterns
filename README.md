@@ -18,12 +18,12 @@ real model with one environment variable when you want to.
 
 | Pattern | Shape | What it shows |
 |---|---|---|
-| [`prompt_chaining`](patterns/prompt_chaining) | linear chain + a gate | decomposing a task into sequential LLM calls with a programmatic checkpoint between them |
-| [`routing`](patterns/routing) | classify → dispatch | sending different inputs to specialized prompts instead of one generic one |
-| [`parallelization`](patterns/parallelization) | fan-out → fan-in | running independent LLM calls concurrently and joining the results |
-| [`orchestrator_workers`](patterns/orchestrator_workers) | dynamic fan-out via `Send` | when the *number* of parallel subtasks is decided by the model at runtime |
-| [`evaluator_optimizer`](patterns/evaluator_optimizer) | generate ⇄ evaluate loop | iterative refinement against explicit pass/fail criteria |
-| [`react_agent`](patterns/react_agent) | tool-call loop | the open-ended "agent": the model decides whether to act or answer, turn by turn |
+| [`prompt_chaining`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/prompt_chaining) | linear chain + a gate | decomposing a task into sequential LLM calls with a programmatic checkpoint between them |
+| [`routing`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/routing) | classify → dispatch | sending different inputs to specialized prompts instead of one generic one |
+| [`parallelization`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/parallelization) | fan-out → fan-in | running independent LLM calls concurrently and joining the results |
+| [`orchestrator_workers`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/orchestrator_workers) | dynamic fan-out via `Send` | when the *number* of parallel subtasks is decided by the model at runtime |
+| [`evaluator_optimizer`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/evaluator_optimizer) | generate ⇄ evaluate loop | iterative refinement against explicit pass/fail criteria |
+| [`react_agent`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/react_agent) | tool-call loop | the open-ended "agent": the model decides whether to act or answer, turn by turn |
 
 Each pattern's own README has a Mermaid diagram of its graph plus notes on
 where it fits, where it doesn't, architectural tradeoffs, production infra

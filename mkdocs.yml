@@ -1,0 +1,54 @@
+site_name: Agentic Design Patterns
+site_description: >-
+  Working, tested LangGraph implementations of the six agentic design
+  patterns from Anthropic's "Building Effective Agents".
+site_url: https://jithinkk.github.io/agentic-design-patterns/
+repo_url: https://github.com/jithinkk/agentic-design-patterns
+repo_name: jithinkk/agentic-design-patterns
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+nav:
+  - Home: index.md
+  - Architecture Overview: architecture-overview.md
+  - Patterns:
+      - Prompt Chaining: patterns/prompt_chaining.md
+      - Routing: patterns/routing.md
+      - Parallelization: patterns/parallelization.md
+      - Orchestrator-Workers: patterns/orchestrator_workers.md
+      - Evaluator-Optimizer: patterns/evaluator_optimizer.md
+      - ReAct Agent: patterns/react_agent.md
+
+plugins:
+  - search
+  - include-markdown:
+      rewrite_relative_urls: true
+
+markdown_extensions:
+  - admonition
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
