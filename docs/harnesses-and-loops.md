@@ -167,12 +167,20 @@ not oversights:
 | **Tool response / execution** | `calculator`'s bit-length bound and expression-length cap (`shared/tools/basic.py`) — this is a real guardrail this repo shipped after a real bug: a single call like `99999999**99999999` hung the process indefinitely before the fix | No sandboxing for tools that touch the filesystem or network (none currently do, but `react_agent`'s README flags this as the pattern to watch) |
 | **Output** | Nothing | No schema/content check on the final answer before it's returned |
 
-The other standing gap, named in every pattern's own README already: no
-`recursion_limit` set anywhere. LangGraph defaults to 25 supersteps if you
-don't set one explicitly — a real bound, just not a *considered* one.
-That's the cheapest guardrail this repo could add next: one keyword
-argument, `app.invoke(..., config={"recursion_limit": N})`, on every
-agent-loop pattern (`react_agent`, `human_in_the_loop`).
+**Recursion limit — closed.** Both agent-loop patterns' `run.py` now set
+`config={"recursion_limit": N}` explicitly (default 25, LangGraph's own
+implicit default made a considered choice instead) rather than relying on
+the framework default silently. Verified empirically, not assumed: a
+runaway tool-calling loop genuinely raises `GraphRecursionError` at the
+limit (proven with a scripted infinite-tool-call test in each pattern's
+test suite), and `interrupt()`/resume budgets independently per
+`invoke()` call rather than cumulatively, so a slow human approval never
+eats into either budget. The graph itself still has no compile-time cap
+— LangGraph doesn't support one — so calling `build_graph().invoke(...)`
+directly, bypassing `run.py`, is still unbounded; see each pattern's
+`graph.py` for that caveat in context. A wall-clock timeout is still a
+separate, unclosed gap — a `recursion_limit` bounds *steps*, not *time*
+if a single step (an unusually slow model call) hangs.
 
 The tool-call and tool-response rows above assume tools you wrote and
 reviewed yourself, like this repo's `shared/tools/basic.py`. That

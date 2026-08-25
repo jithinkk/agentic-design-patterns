@@ -99,11 +99,13 @@ effectful action, resume once a human has weighed in.
 
 ## Production readiness in this repo
 
-The approval gate itself is real, tested LangGraph — not a simulation.
-What's missing for production: a durable checkpointer (currently
-in-memory, lost on restart), an audit trail of decisions, a timeout
-policy for abandoned approvals, and per-call (rather than per-batch)
-granularity if a single turn can request multiple gated actions.
+The approval gate itself is real, tested LangGraph — not a simulation, and
+(like `react_agent`) `run.py` sets an explicit `recursion_limit` rather
+than relying on LangGraph's implicit default. What's still missing for
+production: a durable checkpointer (currently in-memory, lost on
+restart), an audit trail of decisions, a timeout policy for abandoned
+approvals, and per-call (rather than per-batch) granularity if a single
+turn can request multiple gated actions.
 
 ## Relevant open source components
 

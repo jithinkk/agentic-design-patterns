@@ -9,15 +9,28 @@ from patterns.human_in_the_loop.graph import build_graph  # noqa: E402
 
 DEFAULT_TASK = "Send a message to Alice: the report is ready."
 
+# LangGraph's own default if unset -- made explicit and overridable rather
+# than implicit, per docs/harnesses-and-loops.md ("Guardrails"). Verified
+# empirically (not assumed): recursion_limit applies fresh to each separate
+# invoke() call on a thread_id, so the pre-interrupt run and the post-resume
+# run are budgeted independently, not cumulatively -- a human taking a long
+# time to approve doesn't eat into either budget.
+DEFAULT_RECURSION_LIMIT = 25
 
-def main(task: str = DEFAULT_TASK, approve: bool = True, thread_id: str = "demo") -> dict:
+
+def main(
+    task: str = DEFAULT_TASK,
+    approve: bool = True,
+    thread_id: str = "demo",
+    recursion_limit: int = DEFAULT_RECURSION_LIMIT,
+) -> dict:
     """Runs the graph to completion, auto-resolving any approval pause.
 
     A real UI would show `pending` to a human and call `app.invoke(Command(resume=...), config)`
     only after they respond; this scripts both halves for a non-interactive demo/CLI.
     """
     app = build_graph()
-    config = {"configurable": {"thread_id": thread_id}}
+    config = {"configurable": {"thread_id": thread_id}, "recursion_limit": recursion_limit}
 
     result = app.invoke({"messages": [HumanMessage(content=task)]}, config)
     pending_interrupts = result.get("__interrupt__")

@@ -81,7 +81,10 @@ because the space is genuinely too open to enumerate.
 
 - **Set a recursion/step limit and a wall-clock timeout on every
   invocation** (LangGraph's `recursion_limit`) — non-negotiable for any
-  agent loop exposed to real traffic.
+  agent loop exposed to real traffic. `run.py`'s `main()` sets an explicit
+  `recursion_limit` (default 25, LangGraph's own default made deliberate
+  rather than implicit); there's still no wall-clock timeout, and calling
+  `build_graph().invoke(...)` directly bypasses even that.
 - **Put a human-approval interrupt in front of any tool call with real
   side effects** (writes, payments, sends) using LangGraph's `interrupt()`
   — see [`human_in_the_loop`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/human_in_the_loop)
@@ -101,12 +104,14 @@ because the space is genuinely too open to enumerate.
 
 ## Production readiness in this repo
 
-This agent has no recursion limit, no persistence, no approval gate, and
-a three-tool sandboxed toy toolset — intentionally the least
-production-ready pattern here, because openness is inherently the hardest
-thing to harden. Before production: add a step cap, add
-tool-level authorization/sandboxing, add a checkpointer, and — if any tool
-has real side effects — use `human_in_the_loop` instead of this pattern
+This agent has an explicit recursion cap (via `run.py`, not the graph
+itself — see `graph.py`'s comment) but no wall-clock timeout, no
+persistence, no approval gate, and a three-tool sandboxed toy toolset —
+intentionally the least production-ready pattern here, because openness
+is inherently the hardest thing to harden. Before production: add a
+wall-clock timeout, add tool-level authorization/sandboxing, add a
+checkpointer, and — if any tool has real side effects — use
+`human_in_the_loop` instead of this pattern
 directly; the gate isn't optional hardening, it's the difference between
 an agent and an agent you can actually deploy.
 

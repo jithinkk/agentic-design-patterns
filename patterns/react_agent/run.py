@@ -8,10 +8,19 @@ from patterns.react_agent.graph import build_graph  # noqa: E402
 
 DEFAULT_QUESTION = "What is (12 + 8) * 3?"
 
+# LangGraph's own default if unset -- made explicit and overridable rather
+# than implicit, per docs/harnesses-and-loops.md ("Guardrails"). A runaway
+# tool-calling loop hits this and raises GraphRecursionError instead of
+# spinning forever.
+DEFAULT_RECURSION_LIMIT = 25
 
-def main(question: str = DEFAULT_QUESTION) -> dict:
+
+def main(question: str = DEFAULT_QUESTION, recursion_limit: int = DEFAULT_RECURSION_LIMIT) -> dict:
     app = build_graph()
-    return app.invoke({"messages": [HumanMessage(content=question)]})
+    return app.invoke(
+        {"messages": [HumanMessage(content=question)]},
+        config={"recursion_limit": recursion_limit},
+    )
 
 
 if __name__ == "__main__":

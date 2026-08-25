@@ -1,7 +1,13 @@
+import pytest
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
+from langgraph.errors import GraphRecursionError
 from langgraph.types import Command
 
+from patterns.human_in_the_loop import nodes
 from patterns.human_in_the_loop.graph import build_graph
+from patterns.human_in_the_loop.run import main
+from shared.llm.factory import get_chat_model
+from shared.tools.basic import HITL_TOOLS
 
 
 def test_pauses_before_a_side_effecting_tool_call():
@@ -53,3 +59,25 @@ def test_read_only_tools_skip_the_approval_gate():
 
     assert "__interrupt__" not in result
     assert any(isinstance(m, ToolMessage) and m.content == "60" for m in result["messages"])
+
+
+def test_recursion_limit_stops_a_runaway_tool_calling_loop(monkeypatch):
+    """Regression test: proves the cap actually stops something, not just
+    that the config key is set. Targets the read-only calculator tool
+    (not send_message) so the loop actually runs agent<->tools instead of
+    pausing on the approval interrupt() -- a runaway loop that skips the
+    gate entirely would otherwise loop until this hits some other resource
+    limit."""
+
+    def always_call_calculator(messages):
+        return AIMessage(
+            content="",
+            tool_calls=[{"name": "calculator", "args": {"expression": "1+1"}, "id": "call_x"}],
+        )
+
+    monkeypatch.setattr(
+        nodes, "_llm_with_tools", get_chat_model(responder=always_call_calculator).bind_tools(HITL_TOOLS)
+    )
+
+    with pytest.raises(GraphRecursionError):
+        main("This will never stop calling a tool", thread_id="recursion-limit-test", recursion_limit=6)
