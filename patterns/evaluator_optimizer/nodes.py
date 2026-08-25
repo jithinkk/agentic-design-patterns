@@ -4,6 +4,13 @@
 criteria and returns pass/fail plus feedback, and the graph loops back to
 `generate` (with that feedback folded into the prompt) until the evaluator
 passes it or `max_iterations` is reached.
+
+Not to be confused with "evals" as a production practice (a fixed
+test/benchmark set run against the whole system at dev/CI time, tracked
+over releases) -- this `evaluate` node runs at runtime, inside one task,
+and never leaves the graph. See docs/harnesses-and-loops.md ("Evals") for
+the distinction and why this repo's own pytest suite is closer to what
+that term actually means.
 """
 
 from __future__ import annotations

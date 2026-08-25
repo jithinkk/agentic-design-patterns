@@ -15,4 +15,7 @@ def build_graph():
     builder.add_conditional_edges("agent", tools_condition, {"tools": "tools", "__end__": END})
     builder.add_edge("tools", "agent")
 
+    # No recursion_limit set, and no checkpointer -- an unbounded loop with
+    # nothing to persist across a crash. See docs/harnesses-and-loops.md
+    # ("Guardrails", "Memory") for what a production version of this needs.
     return builder.compile()

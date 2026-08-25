@@ -25,6 +25,11 @@ def _safe_pow(base: float, exponent: float) -> float:
     number and can hang a process indefinitely with no error and no
     timeout. Reject anything whose result would exceed a few thousand
     bits *before* computing it, rather than after.
+
+    This and `_MAX_EXPRESSION_LENGTH` below are this repo's only two real
+    guardrails (both at the "tool execution" boundary); see
+    docs/harnesses-and-loops.md ("Guardrails") for the other two
+    boundaries (input, output) this repo doesn't guard at all.
     """
     if exponent != 0 and base not in (0, 1, -1):
         estimated_bits = abs(exponent) * math.log2(max(abs(base), 2))

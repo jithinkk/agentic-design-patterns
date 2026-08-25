@@ -22,7 +22,13 @@ def build_graph(checkpointer: Optional[BaseCheckpointSaver] = None):
     """A checkpointer is required: `interrupt()` needs persisted state to
     pause on one `invoke()` call and resume on the next. Defaults to an
     in-memory saver, which is enough for a single-process demo/test; a
-    real deployment would use a durable one (e.g. Postgres-backed)."""
+    real deployment would use a durable one (e.g. Postgres-backed).
+
+    This is pause/resume plumbing for one interrupted task, not long-term
+    memory -- a fresh `thread_id` per call still starts with no history.
+    See docs/harnesses-and-loops.md ("Memory") for the distinction and
+    what a real long-term-memory setup looks like on top of this same
+    primitive."""
     builder = StateGraph(ApprovalState)
 
     builder.add_node("agent", call_model)
