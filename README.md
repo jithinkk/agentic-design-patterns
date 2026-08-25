@@ -5,10 +5,13 @@ patterns from Anthropic's ["Building Effective
 Agents"](https://www.anthropic.com/research/building-effective-agents):
 five fixed **workflows** (prompt chaining, routing, parallelization,
 orchestrator-workers, evaluator-optimizer) and one open-ended **agent**
-loop (ReAct). Each pattern is a small, self-contained LangGraph
-`StateGraph` you can read start to finish in a couple of minutes, run from
-the CLI, and poke at in tests — the goal is to understand each pattern
-*inside out*, not to ship a framework.
+loop (ReAct) — plus a seventh, **human-in-the-loop**, extending the agent
+loop with the approval-gate mechanism every current production agent
+architecture treats as required infrastructure, not optional. Each
+pattern is a small, self-contained LangGraph `StateGraph` you can read
+start to finish in a couple of minutes, run from the CLI, and poke at in
+tests — the goal is to understand each pattern *inside out*, not to ship
+a framework.
 
 Every pattern runs and is unit-tested **with no API key and no network
 access**, against a small deterministic fake chat model. Point it at a
@@ -24,14 +27,19 @@ real model with one environment variable when you want to.
 | [`orchestrator_workers`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/orchestrator_workers) | dynamic fan-out via `Send` | when the *number* of parallel subtasks is decided by the model at runtime |
 | [`evaluator_optimizer`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/evaluator_optimizer) | generate ⇄ evaluate loop | iterative refinement against explicit pass/fail criteria |
 | [`react_agent`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/react_agent) | tool-call loop | the open-ended "agent": the model decides whether to act or answer, turn by turn |
+| [`human_in_the_loop`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/human_in_the_loop) | agent loop + approval gate | pausing before a side-effecting tool call until a human approves or denies it |
 
 Each pattern's own README has a Mermaid diagram of its graph plus notes on
 where it fits, where it doesn't, architectural tradeoffs, production infra
 choices, production readiness, and relevant open-source components. Start
-with `prompt_chaining` (simplest) and end with `react_agent` (least
-predictable). For the cross-pattern view — a decision tree for picking
-between them and a latency/cost/risk comparison table — see
-[`docs/architecture-overview.md`](docs/architecture-overview.md).
+with `prompt_chaining` (simplest) and end with `human_in_the_loop` (built
+on `react_agent`, least predictable plus a human in the mix). For the
+cross-pattern view — a decision tree for picking between them and a
+latency/cost/risk comparison table — see
+[`docs/architecture-overview.md`](docs/architecture-overview.md). For how
+these patterns map onto real agent harnesses (Claude Code included) and
+the agent loop underneath them, see
+[`docs/harnesses-and-loops.md`](docs/harnesses-and-loops.md).
 
 ## Quick start
 
@@ -50,6 +58,7 @@ Or activate the venv and use `python` directly:
 source .venv/bin/activate
 python main.py run evaluator-optimizer "Write a tagline for Nimbus"
 python -m patterns.orchestrator_workers.run "Write a report covering pricing, onboarding, and support quality."
+python main.py run human-in-the-loop "Send a message to Alice: the report is ready."
 ```
 
 ## Running against a real model
@@ -80,14 +89,16 @@ uv run pytest patterns/orchestrator_workers -v
 agentic-design-patterns/
 ├── main.py                        # Typer CLI: list/run patterns
 ├── docs/
-│   └── architecture-overview.md   # cross-pattern decision tree + comparison table
+│   ├── architecture-overview.md   # cross-pattern decision tree + comparison table
+│   └── harnesses-and-loops.md     # how these patterns map onto real agent harnesses
 ├── patterns/
 │   ├── prompt_chaining/
 │   ├── routing/
 │   ├── parallelization/
 │   ├── orchestrator_workers/
 │   ├── evaluator_optimizer/
-│   └── react_agent/
+│   ├── react_agent/
+│   └── human_in_the_loop/
 │       ├── graph.py                # StateGraph wiring: nodes + edges
 │       ├── nodes.py                # node functions + the fake-LLM script for this pattern
 │       ├── run.py                  # `main()` + CLI entry point
@@ -98,7 +109,7 @@ agentic-design-patterns/
     │   ├── factory.py               # get_chat_model(provider=...) — fake / openai / anthropic
     │   └── fake.py                  # FakeChatModel: scripted BaseChatModel, no network needed
     └── tools/
-        └── basic.py                 # calculator, search_docs, word_count (used by react_agent)
+        └── basic.py                 # calculator, search_docs, word_count, send_message
 ```
 
 Every pattern follows the same shape: `graph.py` defines the `StateGraph`
@@ -123,5 +134,7 @@ against the fake LLM.
 ## Resources
 
 - [Building Effective Agents (Anthropic)](https://www.anthropic.com/research/building-effective-agents) — the taxonomy this repo follows
+- [Effective context engineering for AI agents (Anthropic)](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) — the pattern this repo doesn't implement yet; see `docs/harnesses-and-loops.md`
+- [Effective harnesses for long-running agents (Anthropic)](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)
 - [LangGraph documentation](https://langchain-ai.github.io/langgraph/)
 - [ReAct: Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629)

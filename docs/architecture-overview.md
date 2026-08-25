@@ -1,10 +1,13 @@
 # Architecture Overview
 
-This page is the cross-pattern view: how to pick between the six patterns,
-how their cost/latency/risk profiles compare, and how they relate to each
-other structurally. Each pattern's own README (linked below) goes deep on
-that pattern specifically — where it fits, where it doesn't, architectural
-tradeoffs, production infra, and relevant open-source components.
+This page is the cross-pattern view: how to pick between the seven
+patterns, how their cost/latency/risk profiles compare, and how they
+relate to each other structurally. Each pattern's own README (linked
+below) goes deep on that pattern specifically — where it fits, where it
+doesn't, architectural tradeoffs, production infra, and relevant
+open-source components. For how these patterns map onto real agent
+harnesses rather than this repo's demo graphs, see
+[`docs/harnesses-and-loops.md`](harnesses-and-loops.md).
 
 - [`prompt_chaining`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/prompt_chaining)
 - [`routing`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/routing)
@@ -12,6 +15,7 @@ tradeoffs, production infra, and relevant open-source components.
 - [`orchestrator_workers`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/orchestrator_workers)
 - [`evaluator_optimizer`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/evaluator_optimizer)
 - [`react_agent`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/react_agent)
+- [`human_in_the_loop`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/human_in_the_loop)
 
 ## How to choose a pattern
 
@@ -22,7 +26,9 @@ Everything else follows from that:
 ```mermaid
 flowchart TD
     A[What shape is the task?] --> B{Is the number and order\nof steps knowable in advance?}
-    B -->|No — the model must decide,\nturn by turn, what to do next| Agent[react_agent]
+    B -->|No — the model must decide,\nturn by turn, what to do next| G{Does it call tools with\nreal-world side effects?}
+    G -->|Yes — sends, writes, spends,\ndeletes anything real| HITL[human_in_the_loop]
+    G -->|No — read-only tools only| Agent[react_agent]
     B -->|Yes| C{Do later steps depend on\nan earlier step's output?}
 
     C -->|Yes, a linear dependency chain| D{Fixed number of steps?}
@@ -54,14 +60,18 @@ in disguise, and both are cheaper to run and easier to keep correct.
 | `orchestrator_workers` | orchestrator + max(worker latencies) | sum over N workers, N is runtime-decided | low — N is dynamic | unbounded fan-out cost/latency if subtask count isn't capped |
 | `evaluator_optimizer` | up to `2 × max_iterations` calls | up to `2 × max_iterations` calls | medium — bounded by the cap | non-convergence; a correlated blind spot between generator and evaluator |
 | `react_agent` | unbounded turns | unbounded | low — no compile-time bound | unbounded loops, tool misuse, side effects with no built-in approval gate |
+| `human_in_the_loop` | unbounded turns + human response time | unbounded + a human's time | low, plus human-paced for gated calls | a stuck/abandoned approval blocks the run forever with no timeout by default |
 
 The first five rows are what Anthropic's post calls **workflows** —
 graphs whose shape is fixed in code even though individual node outputs
 are model-generated. `react_agent` is the one **agent** in this repo: the
 model itself chooses the graph's path through tool calls, not just the
-content of each step. That distinction — fixed control flow vs.
-model-chosen control flow — is the single biggest predictor of how hard a
-pattern is to test, cap the cost of, and run safely unattended.
+content of each step. `human_in_the_loop` is `react_agent` plus one more
+layer: the model still chooses the path, but a side-effecting choice
+doesn't execute until a human signs off. That distinction — fixed control
+flow vs. model-chosen control flow vs. model-chosen-but-human-gated — is
+the single biggest predictor of how hard a pattern is to test, cap the
+cost of, and run safely unattended.
 
 ## Structural relationships between the patterns
 
@@ -92,6 +102,11 @@ suggests:
   model can decide the entire trajectory, serially, with no such
   constraint. `orchestrator_workers` is meaningfully easier to bound and
   reason about as a result.
+- **`human_in_the_loop` vs. `react_agent`** — not a separate agent loop,
+  the same one with a checkpoint inserted before specific tool calls. Any
+  `react_agent` toolset can be upgraded to `human_in_the_loop` by naming
+  which tools need approval and adding the gate node; nothing about the
+  underlying `agent`/`tools` loop changes.
 
 ## Notes that apply across every pattern
 
@@ -111,12 +126,15 @@ worth calling out once:
   `opentelemetry-instrumentation-langchain`) is close to free to add and
   disproportionately valuable — "which node degraded" is almost always
   the first question in an incident.
-- **Checkpointing.** None of the graphs in this repo persist state
-  (they're built fresh, in-memory, per `invoke()` call). Any pattern with
-  more than one LLM call benefits from a LangGraph checkpointer
+- **Checkpointing.** Only `human_in_the_loop` uses one in this repo (an
+  in-memory saver, required for `interrupt()`/`Command(resume=...)` to
+  work across two separate `invoke()` calls) — every other graph is built
+  fresh, in-memory, per `invoke()` call with no persistence. Any pattern
+  with more than one LLM call benefits from a LangGraph checkpointer
   (`SqliteSaver` for local/dev, `PostgresSaver` or a Redis-backed saver
   for production) so a mid-run crash doesn't mean re-paying for every
-  step that already succeeded.
+  step that already succeeded — not just the one pattern here that
+  strictly requires one.
 - **Model selection per node, not per graph.** Nothing forces every node
   in a graph to use the same model. Classification/routing steps, cheap
   worker subtasks, and evaluators often do fine on a smaller/cheaper
@@ -130,4 +148,5 @@ worth calling out once:
 - [Building Effective Agents (Anthropic)](https://www.anthropic.com/research/building-effective-agents) — the taxonomy this repo follows
 - [LangGraph documentation](https://langchain-ai.github.io/langgraph/)
 - [LangGraph persistence / checkpointers](https://langchain-ai.github.io/langgraph/concepts/persistence/)
-- [LangGraph human-in-the-loop (`interrupt`)](https://langchain-ai.github.io/langgraph/concepts/human_in_the_loop/)
+- [LangGraph human-in-the-loop (`interrupt`)](https://langchain-ai.github.io/langgraph/concepts/human_in_the_loop/) — implemented in [`patterns/human_in_the_loop`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/human_in_the_loop)
+- [`docs/harnesses-and-loops.md`](harnesses-and-loops.md) — how these patterns map onto real agent harnesses, and the one pattern (context engineering) not implemented here yet

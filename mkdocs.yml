@@ -1,7 +1,7 @@
 site_name: Agentic Design Patterns
 site_description: >-
-  Working, tested LangGraph implementations of the six agentic design
-  patterns from Anthropic's "Building Effective Agents".
+  Working, tested LangGraph implementations of the seven agentic design
+  patterns from Anthropic's "Building Effective Agents" and beyond.
 site_url: https://jithinkk.github.io/agentic-design-patterns/
 repo_url: https://github.com/jithinkk/agentic-design-patterns
 repo_name: jithinkk/agentic-design-patterns
@@ -29,6 +29,7 @@ theme:
 nav:
   - Home: index.md
   - Architecture Overview: architecture-overview.md
+  - Harnesses and Loops: harnesses-and-loops.md
   - Patterns:
       - Prompt Chaining: patterns/prompt_chaining.md
       - Routing: patterns/routing.md
@@ -36,6 +37,7 @@ nav:
       - Orchestrator-Workers: patterns/orchestrator_workers.md
       - Evaluator-Optimizer: patterns/evaluator_optimizer.md
       - ReAct Agent: patterns/react_agent.md
+      - Human-in-the-Loop: patterns/human_in_the_loop.md
 
 plugins:
   - search

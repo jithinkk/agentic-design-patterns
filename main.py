@@ -32,6 +32,7 @@ PATTERNS = {
     "orchestrator-workers": "patterns.orchestrator_workers.run",
     "evaluator-optimizer": "patterns.evaluator_optimizer.run",
     "react-agent": "patterns.react_agent.run",
+    "human-in-the-loop": "patterns.human_in_the_loop.run",
 }
 
 
