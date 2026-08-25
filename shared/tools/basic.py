@@ -8,16 +8,37 @@ exercised end-to-end without any external API.
 from __future__ import annotations
 
 import ast
+import math
 import operator
 
 from langchain_core.tools import tool
+
+_MAX_EXPRESSION_LENGTH = 200
+_MAX_POW_RESULT_BITS = 10_000  # ~3,000 decimal digits; computes instantly
+
+
+def _safe_pow(base: float, exponent: float) -> float:
+    """`operator.pow`, but rejects operands whose result would be absurdly large.
+
+    Python integers are arbitrary precision, so an innocuous-looking
+    expression like `99999999**99999999` computes a ~2.66-billion-bit
+    number and can hang a process indefinitely with no error and no
+    timeout. Reject anything whose result would exceed a few thousand
+    bits *before* computing it, rather than after.
+    """
+    if exponent != 0 and base not in (0, 1, -1):
+        estimated_bits = abs(exponent) * math.log2(max(abs(base), 2))
+        if estimated_bits > _MAX_POW_RESULT_BITS:
+            raise ValueError(f"result too large ({estimated_bits:.0f} bits estimated)")
+    return operator.pow(base, exponent)
+
 
 _SAFE_OPERATORS = {
     ast.Add: operator.add,
     ast.Sub: operator.sub,
     ast.Mult: operator.mul,
     ast.Div: operator.truediv,
-    ast.Pow: operator.pow,
+    ast.Pow: _safe_pow,
     ast.USub: operator.neg,
     ast.UAdd: operator.pos,
 }
@@ -36,6 +57,8 @@ def _eval_node(node: ast.AST) -> float:
 @tool
 def calculator(expression: str) -> str:
     """Evaluate a basic arithmetic expression, e.g. '(3 + 4) * 2'."""
+    if len(expression) > _MAX_EXPRESSION_LENGTH:
+        return f"error: expression too long ({len(expression)} chars, max {_MAX_EXPRESSION_LENGTH})"
     try:
         tree = ast.parse(expression, mode="eval")
         return str(_eval_node(tree.body))
