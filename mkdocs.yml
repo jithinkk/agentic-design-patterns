@@ -30,6 +30,7 @@ nav:
   - Home: index.md
   - Architecture Overview: architecture-overview.md
   - Harnesses and Loops: harnesses-and-loops.md
+  - Real-World Examples: real-world-examples.md
   - Patterns:
       - Prompt Chaining: patterns/prompt_chaining.md
       - Routing: patterns/routing.md

@@ -52,6 +52,10 @@ pay for that flexibility where the task genuinely needs it — most
 "we need an agent" requests turn out to be routing or orchestrator-workers
 in disguise, and both are cheaper to run and easier to keep correct.
 
+See [`docs/real-world-examples.md`](real-world-examples.md) for this tree
+applied to concrete scenarios, including a couple of cases where the
+tempting first choice is wrong.
+
 ## Comparison
 
 | Pattern | Latency profile | Cost profile | Predictability | Primary production risk |
@@ -152,3 +156,4 @@ worth calling out once:
 - [LangGraph persistence / checkpointers](https://langchain-ai.github.io/langgraph/concepts/persistence/)
 - [LangGraph human-in-the-loop (`interrupt`)](https://langchain-ai.github.io/langgraph/concepts/human_in_the_loop/) — implemented in [`patterns/human_in_the_loop`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/human_in_the_loop)
 - [`docs/harnesses-and-loops.md`](harnesses-and-loops.md) — how these patterns map onto real agent harnesses, plus memory, guardrails, MCP tool integration, and evals: what's a real implementation here vs. a named, honest gap (or, for MCP, explicitly out of scope for the code)
+- [`docs/real-world-examples.md`](real-world-examples.md) — the decision tree above applied to concrete scenarios, one per pattern, plus two cases where the tempting first choice is wrong
