@@ -1,11 +1,19 @@
 # Harnesses and Loops
 
-The six workflow/agent patterns in this repo are graph shapes: how nodes
-connect, when they branch, when they loop. This page is about the layer
-above that — how a real coding agent (Claude Code, and agent harnesses
-like it) wraps those shapes into something that runs safely, for hours,
-across sessions, with a human able to step in. It's the "so what does this
-look like outside a demo repo" page.
+The seven patterns in this repo are graph shapes: how nodes connect, when
+they branch, when they loop. This page is about the layer above that — how
+a real coding agent (Claude Code, and agent harnesses like it) wraps those
+shapes into something that runs safely, for hours, across sessions, with a
+human able to step in, its behavior checked before it ships. It's the "so
+what does this look like outside a demo repo" page: the loop, the harness
+around it, and three things every production agent system needs beyond
+the loop — memory, guardrails, and evals (context engineering is folded
+into memory below, since it's largely the same problem).
+
+**This page is deliberately not a proposal for eight more patterns.** The
+seven graphs stay the focus of this repo; what follows is what a
+production system builds *around* them, with an honest accounting of how
+much of that this repo does and doesn't show.
 
 ## Two words, precisely
 
@@ -26,10 +34,10 @@ window isn't enough, how a big task gets split across many loops running
 at once instead of one. A harness can run the same underlying loop a
 thousand times with a thousand different sets of scaffolding around it.
 
-This distinction matters because **the loop is what these six-now-seven
-patterns implement, and the harness is what production agent systems
-build around them.** Confusing the two is why "just add a while loop" and
-"build a production coding agent" sound like the same problem and aren't.
+This distinction matters because **the loop is what these seven patterns
+implement, and the harness is what production agent systems build around
+them.** Confusing the two is why "just add a while loop" and "build a
+production coding agent" sound like the same problem and aren't.
 
 ## What a real harness adds around the loop
 
@@ -85,11 +93,25 @@ pieces a harness assembles. A harness is not an eighth pattern; it's the
 composition of these seven (plus the gaps below) into something that runs
 unattended, safely, for longer than one context window.
 
-## The gap this repo doesn't close yet: context engineering
+## Memory (and context engineering — largely the same problem)
 
-Anthropic's own current guidance names three techniques for the problem
-every long-running agent eventually hits — the context window filling up
-with stale or irrelevant history:
+Two different things share the word "memory," and conflating them causes
+real design mistakes:
+
+- **Short-term / working memory** — the current task's state while it's
+  in progress: the `messages` list in every pattern here, the accumulated
+  `worker_results` in `orchestrator_workers`, the `iteration` count in
+  `evaluator_optimizer`. Every pattern in this repo has this; it's just
+  the graph's state.
+- **Long-term memory** — what persists *across* separate runs: what this
+  user asked last week, what the agent learned that should inform the
+  next unrelated task. **No pattern in this repo has this.** Every
+  `run.py` starts from an empty `messages` list; nothing is read from or
+  written to anywhere outside that one process's memory.
+
+Anthropic's own current guidance names three techniques for the closely
+related problem of the context window filling up with stale or irrelevant
+history as a single task runs long:
 
 - **Compaction** — summarize a conversation nearing its context limit and
   reinitiate with the summary, maximizing recall first, then trimming for
@@ -104,10 +126,94 @@ with stale or irrelevant history:
 `react_agent`'s `messages` list in this repo grows without bound — no
 compaction, no trimming, no external notes. That's a known, documented gap
 (see its README's "production readiness" section), and it's the most
-consequential one left: every source consulted for this page treats
-context engineering as the dominant challenge in production agents once
-tool use and multi-step reasoning are in play, more than pattern choice
-itself. It's the natural next pattern to add here, not yet built.
+consequential one left in this repo: every source consulted for this page
+treats context engineering as the dominant challenge in production agents
+once tool use and multi-step reasoning are in play, more than pattern
+choice itself.
+
+**Don't confuse this with `human_in_the_loop`'s checkpointer.** That
+checkpointer persists state so one paused run can resume — it's plumbing
+for a single interrupted task, not a long-term memory store. Long-term
+memory needs its own storage (a database row per user, a vector store for
+semantic recall) read at the *start* of a run and written at the *end* —
+structurally different from pausing mid-run. A minimal sketch of what
+adding it to `react_agent` would look like, without building a whole new
+pattern for it:
+
+```python
+# Long-term memory, sketched (not implemented in this repo):
+checkpointer = PostgresSaver(...)  # durable, not the in-memory one HITL uses
+app = builder.compile(checkpointer=checkpointer)
+
+config = {"configurable": {"thread_id": f"user-{user_id}"}}  # stable per user, not per run
+result = app.invoke({"messages": [HumanMessage(content=task)]}, config)
+# Next call with the same thread_id continues the same conversation history --
+# that's long-term memory, using the exact same LangGraph primitive
+# human_in_the_loop already uses for a different reason.
+```
+
+## Guardrails
+
+Current production guidance names four places a guardrail belongs: input,
+tool calls, tool responses, and final output. This repo has real,
+concrete instances at two of the four — and the other two are named gaps,
+not oversights:
+
+| Guardrail point | In this repo | Missing |
+|---|---|---|
+| **Input** | Nothing — every pattern trusts its input string as-is | No length cap, no content filtering on what a user submits before it reaches a graph at all |
+| **Tool call** | `human_in_the_loop`'s approval gate — a tool call doesn't execute until a human clears it | Only gates `send_message`; a production system would classify every tool by risk, not hand-pick one |
+| **Tool response / execution** | `calculator`'s bit-length bound and expression-length cap (`shared/tools/basic.py`) — this is a real guardrail this repo shipped after a real bug: a single call like `99999999**99999999` hung the process indefinitely before the fix | No sandboxing for tools that touch the filesystem or network (none currently do, but `react_agent`'s README flags this as the pattern to watch) |
+| **Output** | Nothing | No schema/content check on the final answer before it's returned |
+
+The other standing gap, named in every pattern's own README already: no
+`recursion_limit` set anywhere. LangGraph defaults to 25 supersteps if you
+don't set one explicitly — a real bound, just not a *considered* one.
+That's the cheapest guardrail this repo could add next: one keyword
+argument, `app.invoke(..., config={"recursion_limit": N})`, on every
+agent-loop pattern (`react_agent`, `human_in_the_loop`).
+
+## Evals — not the same thing as `evaluator_optimizer`
+
+These two ideas share a name and get confused constantly:
+
+- **`evaluator_optimizer` (the pattern in this repo)** runs *inside* one
+  task, at *runtime*: generate a solution, grade it, revise, repeat until
+  it passes or a cap is hit. It never leaves the graph.
+- **Evals (a production practice)** run *outside* any single task, at
+  *development/CI time*: a fixed set of inputs with known-good properties,
+  run against the system on every change, scored, tracked over time to
+  catch regressions before they ship. An eval suite tests the *system*;
+  `evaluator_optimizer` is one *component* a system under eval might contain.
+
+This repo already has something eval-shaped, worth naming explicitly: the
+23 tests across `patterns/*/tests/` are a small, deterministic eval suite
+— fixed inputs, asserted properties, run on every change. That's the
+right shape. What makes it a demo rather than a production eval suite:
+
+- **It only tests against the fake LLM.** Every assertion is exact-match
+  against `FakeChatModel`'s scripted output. Nothing here has ever
+  verified that pointing a pattern at a real `gpt-4o-mini` or
+  `claude-sonnet-5` call produces sensible behavior — the fake responder
+  encodes *assumptions* about what a real model would do, never checked
+  against one.
+- **Exact-match doesn't survive contact with a real, non-deterministic
+  model.** A real eval suite needs rubric- or LLM-judge-based scoring
+  ("does the response mention the required keyword and stay under N
+  words?") rather than string equality, since the same prompt against a
+  real model won't return byte-identical output twice.
+- **No regression tracking over time.** Pytest tells you pass/fail right
+  now; it doesn't track whether `routing`'s classification accuracy on a
+  held-out set is drifting release over release, which is what an eval
+  suite is actually for once a pattern is running against a real model in
+  production.
+
+Scalable automation needs both halves this repo currently has only one of:
+deterministic tests that a bug can't silently break (this repo has that,
+against the fake model), and real-model evals that catch the much larger
+class of failures — bad prompts, model upgrades changing behavior, edge
+cases the fake responder never encoded — that only show up against a real
+model (this repo has none of that).
 
 ## Sources
 
@@ -117,3 +223,4 @@ itself. It's the natural next pattern to add here, not yet built.
 - [Effective harnesses for long-running agents (Anthropic)](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) — the initializer-agent / coding-agent / progress-artifact pattern for multi-session work
 - [Harness engineering for coding agent users (Martin Fowler)](https://martinfowler.com/articles/harness-engineering.html)
 - [awesome-harness-engineering](https://github.com/ai-boost/awesome-harness-engineering) — curated list of harness engineering tools and patterns
+- [15 Production Design Patterns for Agentic AI Systems — Reliability Catalog 2026](https://medium.com/@wasowski.jarek/building-reliable-ai-agents-catalog-of-15-production-patterns-agentic-design-patterns-3cff554cbb70) — the four-point guardrail model (input / tool call / tool response / output) and bounded execution

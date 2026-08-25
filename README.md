@@ -37,8 +37,9 @@ on `react_agent`, least predictable plus a human in the mix). For the
 cross-pattern view — a decision tree for picking between them and a
 latency/cost/risk comparison table — see
 [`docs/architecture-overview.md`](docs/architecture-overview.md). For how
-these patterns map onto real agent harnesses (Claude Code included) and
-the agent loop underneath them, see
+these patterns map onto real agent harnesses (Claude Code included), the
+agent loop underneath them, and what production adds beyond the graphs
+here — memory, guardrails, evals — see
 [`docs/harnesses-and-loops.md`](docs/harnesses-and-loops.md).
 
 ## Quick start
@@ -90,7 +91,7 @@ agentic-design-patterns/
 ├── main.py                        # Typer CLI: list/run patterns
 ├── docs/
 │   ├── architecture-overview.md   # cross-pattern decision tree + comparison table
-│   └── harnesses-and-loops.md     # how these patterns map onto real agent harnesses
+│   └── harnesses-and-loops.md     # harnesses, memory, guardrails, evals: production vs. this repo
 ├── patterns/
 │   ├── prompt_chaining/
 │   ├── routing/
@@ -134,7 +135,7 @@ against the fake LLM.
 ## Resources
 
 - [Building Effective Agents (Anthropic)](https://www.anthropic.com/research/building-effective-agents) — the taxonomy this repo follows
-- [Effective context engineering for AI agents (Anthropic)](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) — the pattern this repo doesn't implement yet; see `docs/harnesses-and-loops.md`
+- [Effective context engineering for AI agents (Anthropic)](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) — memory/context management this repo doesn't implement yet; see `docs/harnesses-and-loops.md`
 - [Effective harnesses for long-running agents (Anthropic)](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)
 - [LangGraph documentation](https://langchain-ai.github.io/langgraph/)
 - [ReAct: Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629)

@@ -1,5 +1,7 @@
 # Orchestrator-Workers
 
+**See also:** [`parallelization`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/parallelization) — the simpler sibling to reach for first if the branch count is known in code.
+
 Like `parallelization`, but the number and shape of the parallel subtasks
 **isn't known ahead of time** — an orchestrator LLM call decides that at
 runtime. LangGraph's `Send` primitive lets a routing function fan out to a

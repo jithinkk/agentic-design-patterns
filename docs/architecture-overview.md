@@ -6,8 +6,9 @@ relate to each other structurally. Each pattern's own README (linked
 below) goes deep on that pattern specifically — where it fits, where it
 doesn't, architectural tradeoffs, production infra, and relevant
 open-source components. For how these patterns map onto real agent
-harnesses rather than this repo's demo graphs, see
-[`docs/harnesses-and-loops.md`](harnesses-and-loops.md).
+harnesses rather than this repo's demo graphs — plus memory, guardrails,
+and evals, the three things production adds beyond the graphs themselves
+— see [`docs/harnesses-and-loops.md`](harnesses-and-loops.md).
 
 - [`prompt_chaining`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/prompt_chaining)
 - [`routing`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/routing)
@@ -149,4 +150,4 @@ worth calling out once:
 - [LangGraph documentation](https://langchain-ai.github.io/langgraph/)
 - [LangGraph persistence / checkpointers](https://langchain-ai.github.io/langgraph/concepts/persistence/)
 - [LangGraph human-in-the-loop (`interrupt`)](https://langchain-ai.github.io/langgraph/concepts/human_in_the_loop/) — implemented in [`patterns/human_in_the_loop`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/human_in_the_loop)
-- [`docs/harnesses-and-loops.md`](harnesses-and-loops.md) — how these patterns map onto real agent harnesses, and the one pattern (context engineering) not implemented here yet
+- [`docs/harnesses-and-loops.md`](harnesses-and-loops.md) — how these patterns map onto real agent harnesses, plus memory, guardrails, and evals: what's a real implementation here vs. a named, honest gap

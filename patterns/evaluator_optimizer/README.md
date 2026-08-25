@@ -1,5 +1,7 @@
 # Evaluator-Optimizer
 
+**See also:** [`prompt_chaining`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/prompt_chaining) — the non-looping version of this shape: a gate that can stop the chain but never sends work back for revision.
+
 One LLM call generates a solution; a second, separate call grades it
 against explicit criteria and returns pass/fail plus feedback. On failure,
 the feedback is folded back into the next generation attempt, and the loop

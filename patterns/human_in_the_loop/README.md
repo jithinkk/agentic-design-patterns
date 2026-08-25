@@ -1,5 +1,7 @@
 # Human-in-the-Loop
 
+**Extends:** [`react_agent`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/react_agent) — same graph, plus an approval gate before side-effecting tool calls.
+
 Extends `react_agent`'s tool loop with an approval gate: before a tool
 call that does something real runs, the graph pauses via LangGraph's
 `interrupt()` and waits for a human decision. Read-only tool calls

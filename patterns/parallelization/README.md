@@ -1,5 +1,7 @@
 # Parallelization (Sectioning)
 
+**See also:** [`orchestrator_workers`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/orchestrator_workers) — same fan-out/fan-in shape, but for when the branch count isn't known until runtime.
+
 Splits one input into several **independent** subtasks — here, sentiment,
 one-sentence summary, and keyword extraction over the same text — that run
 concurrently because none of them depends on another's output, then joins
