@@ -152,7 +152,6 @@ secrets/
 
 # UV (Python package manager)
 .venv/
-uv.lock
 
 # Ruff cache
 .ruff_cache/
