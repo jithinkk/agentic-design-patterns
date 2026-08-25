@@ -1,5 +1,7 @@
 # Prompt Chaining
 
+**See also:** [`evaluator_optimizer`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/evaluator_optimizer) — the looping version of this same linear shape, for when a gate needs to send work back for revision instead of just stopping it.
+
 Decomposes a task into a fixed sequence of LLM calls, where each step's
 output feeds the next. A plain Python **gate** sits between the first two
 steps and can stop the chain before the (usually more expensive) later

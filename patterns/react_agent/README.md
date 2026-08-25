@@ -1,5 +1,9 @@
 # ReAct Agent (Reason + Act)
 
+**Extended by:** [`human_in_the_loop`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/human_in_the_loop) — same graph, plus an approval gate before side-effecting tool calls.
+
+**See also:** [`routing`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/routing) — the same decision made once instead of repeatedly, with a fixed branch set.
+
 The canonical "agent" loop: the model gets a system prompt, the tools it's
 allowed to use, and the conversation so far; it either emits a tool call
 or a final answer. Tool calls run through LangGraph's prebuilt `ToolNode`
@@ -9,8 +13,9 @@ the model answers without calling a tool.
 **Use it when** the number of steps can't be predicted up front and the
 model itself needs to decide, turn by turn, whether it has enough
 information to answer or needs to act first. This is the most open-ended
-(and hardest to fully predict) pattern here — the other five are better
-described as fixed "workflows."
+(and hardest to fully predict) pattern here — five of the other six are
+better described as fixed "workflows"; the sixth, `human_in_the_loop`,
+is this same loop with one more layer, not a different shape.
 
 ## Graph shape
 
@@ -43,10 +48,11 @@ because the space is genuinely too open to enumerate.
   safer to run unattended than an agent loop — don't reach for an agent
   by default.
 - **Unattended actions with real-world side effects** (payments,
-  deletions, sending messages) without a human-in-the-loop approval step
-  or a hard tool allowlist. An agent loop has no built-in concept of
-  "this action is irreversible, pause here" — that has to be added
-  explicitly (see Infra choices below).
+  deletions, sending messages) without an approval step or a hard tool
+  allowlist. This exact graph has no built-in concept of "this action is
+  irreversible, pause here" — see
+  [`human_in_the_loop`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/human_in_the_loop),
+  which is this pattern plus exactly that gate.
 - **Latency-critical paths.** The number of round-trips is unbounded by
   design, so p99 latency is fundamentally less predictable than a
   fixed-depth workflow, even with a step cap in place.
@@ -75,11 +81,14 @@ because the space is genuinely too open to enumerate.
 
 - **Set a recursion/step limit and a wall-clock timeout on every
   invocation** (LangGraph's `recursion_limit`) — non-negotiable for any
-  agent loop exposed to real traffic.
+  agent loop exposed to real traffic. `run.py`'s `main()` sets an explicit
+  `recursion_limit` (default 25, LangGraph's own default made deliberate
+  rather than implicit); there's still no wall-clock timeout, and calling
+  `build_graph().invoke(...)` directly bypasses even that.
 - **Put a human-approval interrupt in front of any tool call with real
   side effects** (writes, payments, sends) using LangGraph's `interrupt()`
-  — the standard human-in-the-loop extension of this exact graph shape,
-  and a small addition on top of what's here.
+  — see [`human_in_the_loop`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/human_in_the_loop)
+  for the fully worked version of this, a small addition on top of what's here.
 - **Use a persistent checkpointer** (Postgres- or Redis-backed) so
   long-running agent runs survive process restarts and can resume after a
   human-approval pause. This repo's state is in-memory and doesn't
@@ -95,12 +104,16 @@ because the space is genuinely too open to enumerate.
 
 ## Production readiness in this repo
 
-This agent has no recursion limit, no persistence, no human-in-the-loop
-gate, and a three-tool sandboxed toy toolset — intentionally the least
-production-ready pattern here, because openness is inherently the hardest
-thing to harden. Before production: add a step cap, add
-tool-level authorization/sandboxing, add a checkpointer, and require human
-approval on any irreversible action.
+This agent has an explicit recursion cap (via `run.py`, not the graph
+itself — see `graph.py`'s comment) but no wall-clock timeout, no
+persistence, no approval gate, and a three-tool sandboxed toy toolset —
+intentionally the least production-ready pattern here, because openness
+is inherently the hardest thing to harden. Before production: add a
+wall-clock timeout, add tool-level authorization/sandboxing, add a
+checkpointer, and — if any tool has real side effects — use
+`human_in_the_loop` instead of this pattern
+directly; the gate isn't optional hardening, it's the difference between
+an agent and an agent you can actually deploy.
 
 ## Relevant open source components
 

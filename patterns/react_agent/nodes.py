@@ -4,6 +4,10 @@ A single `agent` node repeatedly calls the model; the model either emits a
 tool call (routed to LangGraph's prebuilt `ToolNode`, whose result loops
 back to `agent`) or a plain answer (which ends the run). This is the loop
 underneath most "autonomous agent" frameworks.
+
+If any tool here had real side effects, `human_in_the_loop` is this same
+loop plus the approval gate that would need adding before deploying one
+that does.
 """
 
 from __future__ import annotations

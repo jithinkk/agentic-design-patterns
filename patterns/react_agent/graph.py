@@ -15,4 +15,9 @@ def build_graph():
     builder.add_conditional_edges("agent", tools_condition, {"tools": "tools", "__end__": END})
     builder.add_edge("tools", "agent")
 
+    # LangGraph has no compile-time recursion cap -- it's set per invoke()
+    # call instead (see run.py's DEFAULT_RECURSION_LIMIT); calling
+    # build_graph().invoke(...) directly, bypassing run.py, is still
+    # unbounded. No checkpointer either -- nothing persists across a crash.
+    # See docs/harnesses-and-loops.md ("Guardrails", "Memory").
     return builder.compile()

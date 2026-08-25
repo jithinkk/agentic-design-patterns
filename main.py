@@ -7,6 +7,11 @@ With no OPENAI_API_KEY / ANTHROPIC_API_KEY set, every pattern runs against
 the built-in offline FakeChatModel (see shared/llm/fake.py) so this works
 out of the box. Set LLM_PROVIDER=openai|anthropic (plus the matching API
 key) to run a pattern against a real model instead.
+
+These graphs are demos of seven patterns' *shape*, not production
+systems -- see docs/harnesses-and-loops.md for how each one relates to a
+real agent harness, and for memory/guardrails/MCP tool integration/evals,
+the production infrastructure these graphs don't provide on their own.
 """
 
 from __future__ import annotations
@@ -32,6 +37,7 @@ PATTERNS = {
     "orchestrator-workers": "patterns.orchestrator_workers.run",
     "evaluator-optimizer": "patterns.evaluator_optimizer.run",
     "react-agent": "patterns.react_agent.run",
+    "human-in-the-loop": "patterns.human_in_the_loop.run",
 }
 
 

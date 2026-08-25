@@ -1,5 +1,7 @@
 # Routing
 
+**See also:** [`react_agent`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/react_agent) — the same "what should happen next?" decision, made repeatedly instead of once, with no fixed branch set.
+
 A cheap classification step inspects the input and dispatches it to one of
 several specialized downstream prompts (in a real system, potentially
 different models, tools, or context per branch), instead of forcing one
