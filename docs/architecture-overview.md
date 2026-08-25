@@ -6,12 +6,12 @@ other structurally. Each pattern's own README (linked below) goes deep on
 that pattern specifically — where it fits, where it doesn't, architectural
 tradeoffs, production infra, and relevant open-source components.
 
-- [`prompt_chaining`](../patterns/prompt_chaining/README.md)
-- [`routing`](../patterns/routing/README.md)
-- [`parallelization`](../patterns/parallelization/README.md)
-- [`orchestrator_workers`](../patterns/orchestrator_workers/README.md)
-- [`evaluator_optimizer`](../patterns/evaluator_optimizer/README.md)
-- [`react_agent`](../patterns/react_agent/README.md)
+- [`prompt_chaining`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/prompt_chaining)
+- [`routing`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/routing)
+- [`parallelization`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/parallelization)
+- [`orchestrator_workers`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/orchestrator_workers)
+- [`evaluator_optimizer`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/evaluator_optimizer)
+- [`react_agent`](https://github.com/jithinkk/agentic-design-patterns/tree/main/patterns/react_agent)
 
 ## How to choose a pattern
 
