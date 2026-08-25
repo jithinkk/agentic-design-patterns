@@ -40,7 +40,10 @@ latency/cost/risk comparison table — see
 these patterns map onto real agent harnesses (Claude Code included), the
 agent loop underneath them, and what production adds beyond the graphs
 here — memory, guardrails, MCP tool integration, evals — see
-[`docs/harnesses-and-loops.md`](docs/harnesses-and-loops.md).
+[`docs/harnesses-and-loops.md`](docs/harnesses-and-loops.md). For worked
+examples applying the decision tree to concrete scenarios — including a
+couple of cases where the tempting first choice is wrong — see
+[`docs/real-world-examples.md`](docs/real-world-examples.md).
 
 ## Quick start
 
@@ -91,7 +94,8 @@ agentic-design-patterns/
 ├── main.py                        # Typer CLI: list/run patterns
 ├── docs/
 │   ├── architecture-overview.md   # cross-pattern decision tree + comparison table
-│   └── harnesses-and-loops.md     # harnesses, memory, guardrails, MCP, evals: production vs. this repo
+│   ├── harnesses-and-loops.md     # harnesses, memory, guardrails, MCP, evals: production vs. this repo
+│   └── real-world-examples.md     # the decision tree applied to concrete scenarios
 ├── patterns/
 │   ├── prompt_chaining/
 │   ├── routing/
