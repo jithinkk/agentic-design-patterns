@@ -38,8 +38,9 @@ cross-pattern view — a decision tree for picking between them and a
 latency/cost/risk comparison table — see
 [`docs/architecture-overview.md`](docs/architecture-overview.md). For how
 these patterns map onto real agent harnesses (Claude Code included), the
-agent loop underneath them, and what production adds beyond the graphs
-here — memory, guardrails, MCP tool integration, evals — see
+agent loop underneath them, the different harness archetypes and what
+guides picking one, and what production adds beyond the graphs here —
+memory, guardrails, MCP tool integration, evals — see
 [`docs/harnesses-and-loops.md`](docs/harnesses-and-loops.md). For worked
 examples applying the decision tree to concrete scenarios — including a
 couple of cases where the tempting first choice is wrong — see

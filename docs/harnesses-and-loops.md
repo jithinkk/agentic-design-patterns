@@ -6,10 +6,11 @@ a real coding agent (Claude Code, and agent harnesses like it) wraps those
 shapes into something that runs safely, for hours, across sessions, with a
 human able to step in, its behavior checked before it ships. It's the "so
 what does this look like outside a demo repo" page: the loop, the harness
-around it, and four things every production agent system needs beyond
-the loop — memory, guardrails, tool integration at scale (MCP), and evals
-(context engineering is folded into memory below, since it's largely the
-same problem).
+around it, the different shapes a harness itself can take and what should
+guide picking one, and four things every production agent system needs
+beyond the loop — memory, guardrails, tool integration at scale (MCP),
+and evals (context engineering is folded into memory below, since it's
+largely the same problem).
 
 **This page is deliberately not a proposal for eight more patterns.** The
 seven graphs stay the focus of this repo; what follows is what a
@@ -93,6 +94,90 @@ None of these patterns are *replaced* by harness concepts — they're the
 pieces a harness assembles. A harness is not an eighth pattern; it's the
 composition of these seven (plus the gaps below) into something that runs
 unattended, safely, for longer than one context window.
+
+## Different harnesses, and what guides picking one
+
+Everything above this point — the tool-execution boundary, hooks
+stacking into dispatchers, subagent isolation, cross-session
+persistence — came from one concrete harness archetype: an interactive
+CLI/coding-agent harness like Claude Code. Not every production agent
+system is shaped like that. Different deployment contexts produce
+genuinely different harness shapes, assembling the same seven patterns
+differently depending on who — or what — is on the other end of the loop.
+
+**Interactive CLI/coding-agent harness.** Claude Code itself, as
+described throughout this page. A human is present and attentive turn by
+turn, so approval for a risky action can be a blocking prompt — the exact
+mechanism `human_in_the_loop`'s `interrupt()` demonstrates here. Leans on
+`react_agent` for the core loop, `human_in_the_loop` for the permission
+layer, and `orchestrator_workers` for subagent dispatch.
+
+**Chat/product assistant harness.** A customer-facing assistant embedded
+in a product — turn-based, session-scoped memory, a tight per-turn
+latency budget. Nobody is watching each individual tool call the way a
+developer watches Claude Code's prompts, so tool access is policy-gated
+up front (a fixed allowlist decided at design time) rather than gated
+per-call with a blocking pause. Leans on `routing` for intent
+classification and `prompt_chaining`/`parallelization` for structured
+sub-tasks; `react_agent` only within a toolset that's already been
+vetted as safe to run unsupervised.
+
+**Autonomous/scheduled harness.** No human present at run time at all —
+a cron-triggered agent, a monitoring bot, a routine that wakes itself up
+on a schedule. This very repo's development process used a live instance
+of exactly this archetype: several PR check-ins in this session ran as
+scheduled routines that fired unattended, checked CI/mergeability, and
+either acted or silently re-armed for the next check — with no one
+watching any single firing. This archetype can't use a blocking
+`interrupt()` the way `human_in_the_loop` does, because there's no one to
+resume it; it needs the decision made *in advance* instead — an
+auto-approve/auto-deny policy, with escalation via a notification rather
+than a paused run. Guardrails matter more here than anywhere else, since
+unattended plus open-ended is the highest-risk combination a harness can
+have. Leans on `prompt_chaining`/`orchestrator_workers`/
+`evaluator_optimizer` — fixed, testable shapes — over open-ended
+`react_agent`.
+
+**Batch/pipeline harness.** A high-volume, cost-sensitive offline job —
+document processing across thousands of records, say. Idempotency and
+retry-safety matter more than flexibility, and cost is `per-item ×
+volume`, which makes an unbounded `react_agent` per item the single most
+expensive shape available at scale. Leans hardest on the fixed-shape
+workflow patterns specifically *because* their cost is predictable in
+code, not despite it.
+
+**Multi-agent orchestration harness.** A top-level coordinator
+dispatching to many specialized subagents — Claude Code's own dynamic
+orchestration extension (described above) or a swarm-style system more
+broadly. Needs isolation between subagents' context and an explicit
+reduction/aggregation step; cost and latency both multiply with subagent
+count. `orchestrator_workers` is the structural backbone; each worker can
+internally be any of the other six patterns.
+
+**What guides picking one** — the harness-level version of the
+pattern-level question `architecture-overview.md`'s decision tree asks:
+
+- **Is a human present and attentive at run time?** Interactive harnesses
+  can use blocking `interrupt()`-based approval; autonomous ones can't,
+  and need policy-based guardrails decided in advance instead.
+- **What's the latency budget?** Sub-second/turn-based rules out
+  unbounded `react_agent` loops; offline/batch tolerates them far better.
+- **What's the volume and cost sensitivity?** A one-off task can afford
+  flexibility; a thousand-per-day task needs the cheapest fixed-shape
+  pattern that still works.
+- **What's the blast radius of a mistake?** Any harness with real
+  side-effecting tools needs an approval or policy gate somewhere —
+  whether that's a blocking `interrupt()` (interactive) or a
+  pre-authorized allowlist plus an audit log (autonomous).
+- **How long does a single unit of work run?** Single-request harnesses
+  need no persistence; multi-session or multi-day harnesses need the same
+  checkpointer mechanism `human_in_the_loop` already demonstrates here,
+  just stretched across a longer boundary.
+
+This is the same instinct as `architecture-overview.md`'s rule of thumb —
+prefer the most constrained pattern that still solves the problem — one
+level up: prefer the most constrained *harness* that still fits how the
+system will actually run.
 
 ## Memory (and context engineering — largely the same problem)
 
