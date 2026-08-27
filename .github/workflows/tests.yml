@@ -25,7 +25,7 @@ jobs:
         run: uv python install 3.13
 
       - name: Install dependencies
-        run: uv sync --group dev --locked
+        run: uv sync --group dev --group harnesses --locked
 
       - name: Run tests
         run: uv run --no-sync pytest -v

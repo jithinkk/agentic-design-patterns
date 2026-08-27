@@ -44,7 +44,10 @@ memory, guardrails, MCP tool integration, evals — see
 [`docs/harnesses-and-loops.md`](docs/harnesses-and-loops.md). For worked
 examples applying the decision tree to concrete scenarios — including a
 couple of cases where the tempting first choice is wrong — see
-[`docs/real-world-examples.md`](docs/real-world-examples.md).
+[`docs/real-world-examples.md`](docs/real-world-examples.md). For the same
+patterns re-expressed in LangChain's `deepagents` — what a framework
+supplies for free and what it costs you — see
+[`harnesses/`](https://github.com/jithinkk/agentic-design-patterns/tree/main/harnesses).
 
 ## Quick start
 
@@ -97,6 +100,8 @@ agentic-design-patterns/
 │   ├── architecture-overview.md   # cross-pattern decision tree + comparison table
 │   ├── harnesses-and-loops.md     # harnesses, memory, guardrails, MCP, evals: production vs. this repo
 │   └── real-world-examples.md     # the decision tree applied to concrete scenarios
+├── harnesses/
+│   └── deepagents/                # the same patterns under LangChain's deepagents
 ├── patterns/
 │   ├── prompt_chaining/
 │   ├── routing/
