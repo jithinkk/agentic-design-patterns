@@ -274,11 +274,22 @@ see below.
 
 ## Tool integration at scale: MCP
 
-**Not implemented in this repo's code, and not planned to be.** No MCP
-client, no new dependency, nothing importable — this section is
-documentation only, describing how the pattern shapes here relate to a
-real integration, not a feature this repo ships. If you came here looking
-for `shared/tools/mcp.py`, it doesn't exist and isn't the point.
+**Half implemented, deliberately.** The distinction is direction:
+
+- **Serving** this repo's own tools over MCP — implemented, in
+  [`shared/tools/mcp_server.py`](https://github.com/jithinkk/agentic-design-patterns/blob/main/shared/tools/mcp_server.py).
+  A stdio server exposing the four tools in `shared/tools/basic.py`, so
+  any MCP-speaking harness can call them. It's unit-tested offline
+  (`MCPServer.list_tools()` and `.call_tool()` are directly awaitable, so
+  no transport, subprocess or socket is needed in a test) and its
+  optional dependency lives in the `harnesses` group.
+- **Consuming** third-party MCP tool servers — still not implemented, for
+  the reason given below. That's the direction that would cost this repo
+  its offline guarantee.
+
+Serving is cheap and honest because the tools are ours and already
+tested; consuming means depending on someone else's live server. The rest
+of this section is about the consuming side.
 
 **What MCP is, briefly.** The [Model Context
 Protocol](https://modelcontextprotocol.io/) is a standardized
@@ -317,7 +328,7 @@ care whether a tool is a three-line local Python function or a call to a
 remote MCP server. The pattern shapes in this repo are already correct
 for both.
 
-**Why this repo doesn't do it anyway.** Every pattern here is built to
+**Why this repo doesn't consume MCP servers.** Every pattern here is built to
 run fully offline, deterministically, against a scripted fake model, with
 no network access required to clone-and-test — that's the whole premise
 behind `shared/llm/fake.py`. MCP is a live client-server protocol; there's
@@ -351,6 +362,55 @@ total and we wrote all of them. Against a dynamically-discovered set of
 MCP tools from third-party servers, the safe default flips — gate
 everything by default, and explicitly allowlist only tools from servers
 you've actually reviewed.
+
+### Which CLI harnesses you can point at an MCP server
+
+The archetype table earlier in this page is about harness *shapes*. This
+is the concrete roster of open-source **interactive CLI/coding-agent**
+harnesses as of writing, and how you'd attach a tool server like this
+repo's to each.
+
+MCP is close to universal among them, which is what makes writing one
+server worthwhile rather than N integrations:
+
+| Harness | Project | Config format | MCP |
+|---|---|---|---|
+| OpenCode | `sst/opencode` | JSON (`opencode.json`) | yes |
+| Goose | `block/goose` | YAML | yes — MCP *is* its extension model |
+| Hermes Agent | `NousResearch/hermes-agent` | YAML | yes |
+| Crush | `charmbracelet/crush` | shell-style rc file | yes — stdio, http, sse |
+| Cline | `cline/cline` | JSON | yes |
+| Aider | `Aider-AI/aider` | YAML | **no** |
+
+Every one of them takes the same two things — a command to run and its
+arguments — so attaching the server in this repo means pointing a harness
+at `python -m shared.tools.mcp_server`. Only the surrounding config key
+differs.
+
+**Aider is the exception**: it has no MCP support, so tools reach it as
+something you run yourself and paste, or a file you `--read` into the
+chat. Worth knowing before planning an integration around it.
+
+**Deliberately no config snippets here.** This surface moves fast enough
+that pasted blocks would be quietly wrong within months, and unlike the
+code in this repo they can't be CI-verified — while writing this page
+alone, OpenCode was mid-migration between GitHub orgs, Crush had
+deprecated its JSON config for an rc file, and OpenHands had renamed
+itself and split its agent into a separate SDK. Check each project's
+current docs for the exact key; the shape (a command plus args) is the
+part that has stayed stable.
+
+**Name Hermes Agent in full.** "Hermes" alone is ambiguous: Nous Research
+also publishes the Hermes 3/4 open-weight *models* (a different thing —
+notable for an XML tool-call convention, not a harness), and Meta's
+JavaScript engine shares the name.
+
+One caveat on testing: of these, none offers a stub-model mode comparable
+to this repo's `FakeChatModel`, so an end-to-end "harness drives the
+tools" check needs either a real API key or a local OpenAI-compatible
+endpoint. That's exactly why the integration this repo ships is the
+*server* — which is testable in-process — rather than harness configs,
+which are not.
 
 ## Evals — not the same thing as `evaluator_optimizer`
 

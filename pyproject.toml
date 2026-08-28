@@ -30,7 +30,19 @@ docs = [
     "mkdocs-material>=9.7.7",
     "mkdocs-include-markdown-plugin>=7.3.0",
 ]
+harnesses = [
+    "deepagents>=0.7.9",
+    "mcp>=2.1.1",
+]
+
+# The repo's first pytest config. Without `testpaths`, bare `pytest` collects
+# from the rootdir down, which would pull in `harnesses/` even when its
+# optional dependency group isn't installed. Listing the roots explicitly
+# keeps collection predictable; `importorskip` inside the harness tests then
+# turns a missing dependency into a skip rather than a collection error.
+[tool.pytest.ini_options]
+testpaths = ["patterns", "shared", "harnesses"]
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["shared*", "patterns*"]
+include = ["shared*", "patterns*", "harnesses*"]
