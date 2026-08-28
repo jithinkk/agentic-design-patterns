@@ -47,6 +47,14 @@ plugins:
   - include-markdown:
       rewrite_relative_urls: true
 
+# mkdocs-material lazy-loads Mermaid from unpkg.com at render time, which is
+# blocked or unreliable on some networks (and was silently failing on GitHub
+# Pages). Preloading it here from jsdelivr makes the theme's runtime check
+# (`typeof mermaid == "undefined"`) find it already defined and skip the
+# unpkg fetch.
+extra_javascript:
+  - https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js
+
 markdown_extensions:
   - admonition
   - tables
