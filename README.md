@@ -120,7 +120,8 @@ agentic-design-patterns/
     │   ├── factory.py               # get_chat_model(provider=...) — fake / openai / anthropic
     │   └── fake.py                  # FakeChatModel: scripted BaseChatModel, no network needed
     └── tools/
-        └── basic.py                 # calculator, search_docs, word_count, send_message
+        ├── basic.py                 # calculator, search_docs, word_count, send_message
+        └── mcp_server.py            # those same tools served over MCP, for any harness
 ```
 
 Every pattern follows the same shape: `graph.py` defines the `StateGraph`

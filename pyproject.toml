@@ -32,6 +32,7 @@ docs = [
 ]
 harnesses = [
     "deepagents>=0.7.9",
+    "mcp>=2.1.1",
 ]
 
 # The repo's first pytest config. Without `testpaths`, bare `pytest` collects
