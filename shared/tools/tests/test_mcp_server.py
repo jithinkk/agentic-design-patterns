@@ -2,7 +2,7 @@ import asyncio
 
 import pytest
 
-# `mcp` ships in the optional `harnesses` group. Skipping keeps `pytest`
+# `mcp` ships in the optional `mcp` group. Skipping keeps `pytest`
 # green for a contributor who ran a plain `uv sync`; CI installs the group.
 pytest.importorskip("mcp")
 

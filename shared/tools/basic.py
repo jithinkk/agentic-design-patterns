@@ -28,8 +28,10 @@ def _safe_pow(base: float, exponent: float) -> float:
 
     This and `_MAX_EXPRESSION_LENGTH` below are this repo's only two real
     guardrails (both at the "tool execution" boundary); see
-    docs/harnesses-and-loops.md ("Guardrails") for the other two
-    boundaries (input, output) this repo doesn't guard at all.
+    ai-harnesses's docs/harnesses-and-loops.md ("Guardrails") --
+    https://github.com/jithinkk/ai-harnesses/blob/main/docs/harnesses-and-loops.md
+    -- for the other two boundaries (input, output) this repo doesn't guard
+    at all.
     """
     if exponent != 0 and base not in (0, 1, -1):
         estimated_bits = abs(exponent) * math.log2(max(abs(base), 2))

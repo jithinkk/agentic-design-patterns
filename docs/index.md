@@ -128,9 +128,10 @@ choices, production readiness, and relevant open-source components.
     ---
 
     The same patterns re-expressed in LangChain's `deepagents` — what a
-    framework supplies for free and what it costs you.
+    framework supplies for free and what it costs you. Now lives in its
+    own repo, `ai-harnesses`.
 
-    [:octicons-arrow-right-24: Read more](harnesses/deepagents.md)
+    [:octicons-arrow-right-24: Read more](https://jithinkk.github.io/ai-harnesses/deepagents/)
 
 </div>
 

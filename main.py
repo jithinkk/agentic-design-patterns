@@ -9,9 +9,11 @@ out of the box. Set LLM_PROVIDER=openai|anthropic (plus the matching API
 key) to run a pattern against a real model instead.
 
 These graphs are demos of seven patterns' *shape*, not production
-systems -- see docs/harnesses-and-loops.md for how each one relates to a
-real agent harness, and for memory/guardrails/MCP tool integration/evals,
-the production infrastructure these graphs don't provide on their own.
+systems -- see ai-harnesses's docs/harnesses-and-loops.md
+(https://github.com/jithinkk/ai-harnesses/blob/main/docs/harnesses-and-loops.md)
+for how each one relates to a real agent harness, and for
+memory/guardrails/MCP tool integration/evals, the production infrastructure
+these graphs don't provide on their own.
 """
 
 from __future__ import annotations

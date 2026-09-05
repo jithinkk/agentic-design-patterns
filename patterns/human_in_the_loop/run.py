@@ -10,7 +10,9 @@ from patterns.human_in_the_loop.graph import build_graph  # noqa: E402
 DEFAULT_TASK = "Send a message to Alice: the report is ready."
 
 # LangGraph's own default if unset -- made explicit and overridable rather
-# than implicit, per docs/harnesses-and-loops.md ("Guardrails"). Verified
+# than implicit, per ai-harnesses's docs/harnesses-and-loops.md ("Guardrails")
+# -- https://github.com/jithinkk/ai-harnesses/blob/main/docs/harnesses-and-loops.md.
+# Verified
 # empirically (not assumed): recursion_limit applies fresh to each separate
 # invoke() call on a thread_id, so the pre-interrupt run and the post-resume
 # run are budgeted independently, not cumulatively -- a human taking a long

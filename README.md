@@ -41,13 +41,13 @@ these patterns map onto real agent harnesses (Claude Code included), the
 agent loop underneath them, the different harness archetypes and what
 guides picking one, and what production adds beyond the graphs here —
 memory, guardrails, MCP tool integration, evals — see
-[`docs/harnesses-and-loops.md`](docs/harnesses-and-loops.md). For worked
-examples applying the decision tree to concrete scenarios — including a
-couple of cases where the tempting first choice is wrong — see
+[`ai-harnesses`'s Harnesses and Loops](https://jithinkk.github.io/ai-harnesses/harnesses-and-loops/).
+For worked examples applying the decision tree to concrete scenarios —
+including a couple of cases where the tempting first choice is wrong — see
 [`docs/real-world-examples.md`](docs/real-world-examples.md). For the same
 patterns re-expressed in LangChain's `deepagents` — what a framework
 supplies for free and what it costs you — see
-[`harnesses/`](https://github.com/jithinkk/agentic-design-patterns/tree/main/harnesses).
+[`ai-harnesses/deepagents_harness`](https://github.com/jithinkk/ai-harnesses/tree/main/deepagents_harness).
 
 ## Quick start
 
@@ -98,10 +98,8 @@ agentic-design-patterns/
 ├── main.py                        # Typer CLI: list/run patterns
 ├── docs/
 │   ├── architecture-overview.md   # cross-pattern decision tree + comparison table
-│   ├── harnesses-and-loops.md     # harnesses, memory, guardrails, MCP, evals: production vs. this repo
+│   ├── harnesses-and-loops.md     # pointer to the essay, now in the ai-harnesses repo
 │   └── real-world-examples.md     # the decision tree applied to concrete scenarios
-├── harnesses/
-│   └── deepagents/                # the same patterns under LangChain's deepagents
 ├── patterns/
 │   ├── prompt_chaining/
 │   ├── routing/
@@ -146,7 +144,7 @@ against the fake LLM.
 ## Resources
 
 - [Building Effective Agents (Anthropic)](https://www.anthropic.com/research/building-effective-agents) — the taxonomy this repo follows
-- [Effective context engineering for AI agents (Anthropic)](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) — memory/context management this repo doesn't implement yet; see `docs/harnesses-and-loops.md`
+- [Effective context engineering for AI agents (Anthropic)](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) — memory/context management this repo doesn't implement yet; see [`ai-harnesses`'s Harnesses and Loops](https://jithinkk.github.io/ai-harnesses/harnesses-and-loops/)
 - [Effective harnesses for long-running agents (Anthropic)](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)
 - [LangGraph documentation](https://langchain-ai.github.io/langgraph/)
 - [ReAct: Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629)
