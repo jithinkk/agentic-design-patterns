@@ -26,7 +26,9 @@ def build_graph(checkpointer: Optional[BaseCheckpointSaver] = None):
 
     This is pause/resume plumbing for one interrupted task, not long-term
     memory -- a fresh `thread_id` per call still starts with no history.
-    See docs/harnesses-and-loops.md ("Memory") for the distinction and
+    See ai-harnesses's docs/harnesses-and-loops.md ("Memory") --
+    https://github.com/jithinkk/ai-harnesses/blob/main/docs/harnesses-and-loops.md
+    -- for the distinction and
     what a real long-term-memory setup looks like on top of this same
     primitive."""
     builder = StateGraph(ApprovalState)

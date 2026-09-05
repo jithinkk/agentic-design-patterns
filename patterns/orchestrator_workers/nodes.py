@@ -10,8 +10,10 @@ runs them all in parallel, and their results accumulate into
 `worker` here gets only its own subtask, not `orchestrator`'s reasoning or
 any other worker's state -- the same clean-context-window isolation real
 subagent dispatch (Claude Code's `Task` tool included) relies on. See
-docs/harnesses-and-loops.md ("Where each pattern shows up in a real
-harness") for the fuller mapping.
+ai-harnesses's docs/harnesses-and-loops.md ("Where each pattern shows up in
+a real harness") --
+https://github.com/jithinkk/ai-harnesses/blob/main/docs/harnesses-and-loops.md
+-- for the fuller mapping.
 """
 
 from __future__ import annotations

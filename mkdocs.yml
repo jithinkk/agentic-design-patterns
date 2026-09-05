@@ -59,8 +59,6 @@ nav:
       - Evaluator-Optimizer: patterns/evaluator_optimizer.md
       - ReAct Agent: patterns/react_agent.md
       - Human-in-the-Loop: patterns/human_in_the_loop.md
-  - Harnesses:
-      - Under deepagents: harnesses/deepagents.md
 
 plugins:
   - search

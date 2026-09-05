@@ -9,7 +9,9 @@ from patterns.react_agent.graph import build_graph  # noqa: E402
 DEFAULT_QUESTION = "What is (12 + 8) * 3?"
 
 # LangGraph's own default if unset -- made explicit and overridable rather
-# than implicit, per docs/harnesses-and-loops.md ("Guardrails"). A runaway
+# than implicit, per ai-harnesses's docs/harnesses-and-loops.md ("Guardrails")
+# -- https://github.com/jithinkk/ai-harnesses/blob/main/docs/harnesses-and-loops.md.
+# A runaway
 # tool-calling loop hits this and raises GraphRecursionError instead of
 # spinning forever.
 DEFAULT_RECURSION_LIMIT = 25

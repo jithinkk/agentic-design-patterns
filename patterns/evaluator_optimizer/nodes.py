@@ -8,7 +8,9 @@ passes it or `max_iterations` is reached.
 Not to be confused with "evals" as a production practice (a fixed
 test/benchmark set run against the whole system at dev/CI time, tracked
 over releases) -- this `evaluate` node runs at runtime, inside one task,
-and never leaves the graph. See docs/harnesses-and-loops.md ("Evals") for
+and never leaves the graph. See ai-harnesses's docs/harnesses-and-loops.md
+("Evals") -- https://github.com/jithinkk/ai-harnesses/blob/main/docs/harnesses-and-loops.md
+-- for
 the distinction and why this repo's own pytest suite is closer to what
 that term actually means.
 """

@@ -1,6 +1,6 @@
 """Exposes this repo's tools over MCP, so any MCP-speaking harness can call them.
 
-[`docs/harnesses-and-loops.md`](https://github.com/jithinkk/agentic-design-patterns/blob/main/docs/harnesses-and-loops.md)
+[`ai-harnesses`'s Harnesses and Loops](https://github.com/jithinkk/ai-harnesses/blob/main/docs/harnesses-and-loops.md)
 describes MCP as the standard way a harness integrates tools at scale, but
 until now the repo only *documented* it. This closes that gap with the
 smallest honest artifact: the four tools in `shared/tools/basic.py`, served
@@ -11,8 +11,7 @@ over stdio.
 are *architectural shapes*, not capabilities; exposing `routing` as a tool
 would hand a coding agent a toy graph that sorts a fake support ticket,
 which helps nobody. Tools are the part of this repo that genuinely is a
-capability, so tools are the part that belongs behind MCP. See
-`harnesses/README.md` for the fuller reasoning.
+capability, so tools are the part that belongs behind MCP.
 
 `send_message` is included deliberately, even though it has a side effect
 (a simulated one). A harness that permission-gates tool calls will prompt
@@ -22,7 +21,7 @@ the harness instead. That contrast is the point.
 
 Run it:
 
-    uv run --group harnesses python -m shared.tools.mcp_server
+    uv run --group mcp python -m shared.tools.mcp_server
 
 Then point a harness at that command. Every MCP-speaking harness takes a
 command plus args; the exact config key differs per harness and moves often

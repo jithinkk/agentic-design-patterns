@@ -19,5 +19,6 @@ def build_graph():
     # call instead (see run.py's DEFAULT_RECURSION_LIMIT); calling
     # build_graph().invoke(...) directly, bypassing run.py, is still
     # unbounded. No checkpointer either -- nothing persists across a crash.
-    # See docs/harnesses-and-loops.md ("Guardrails", "Memory").
+    # See ai-harnesses's docs/harnesses-and-loops.md ("Guardrails", "Memory")
+    # -- https://github.com/jithinkk/ai-harnesses/blob/main/docs/harnesses-and-loops.md
     return builder.compile()
