@@ -56,18 +56,40 @@ def run_pattern(
     input: Optional[str] = typer.Argument(
         None, help="Task/question text; each pattern falls back to a sensible default."
     ),
+    raw: bool = typer.Option(
+        False, "--raw", help="Print the full result dict instead of the narrated trace."
+    ),
+    otel: bool = typer.Option(
+        False,
+        "--otel",
+        help="Also emit an OpenTelemetry GenAI span tree to the console (needs `uv sync --group otel`).",
+    ),
 ) -> None:
-    """Run a pattern's graph end-to-end and print the resulting state."""
+    """Run a pattern's graph end-to-end and print a trace that narrates its shape.
+
+    Default output is the pattern's `run.py::render` -- how many LLM calls,
+    in what shape, which branch ran, how many loop turns. `--raw` gives the
+    untouched state dict; `--otel` additionally prints the production-style
+    span tree (see shared/obs.py and docs/observability.md).
+    """
     if pattern not in PATTERNS:
         console.print(f"[red]Unknown pattern {pattern!r}.[/red] Try one of: {', '.join(PATTERNS)}")
         raise typer.Exit(1)
+
+    if otel:
+        from shared.obs import enable_console_otel
+
+        enable_console_otel()
 
     module = importlib.import_module(PATTERNS[pattern])
     result = module.main(input) if input else module.main()
 
     provider = os.getenv("LLM_PROVIDER", "auto (fake unless an API key is set)")
     console.print(f"\n[bold green]LLM provider:[/bold green] {provider}\n")
-    pprint(result)
+    if raw:
+        pprint(result)
+    else:
+        print(module.render(result))
 
 
 if __name__ == "__main__":

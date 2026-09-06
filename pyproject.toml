@@ -33,6 +33,14 @@ docs = [
 mcp = [
     "mcp>=2.1.1",
 ]
+# `main.py run <pattern> --otel` only. Traceloop's OpenLLMetry SDK
+# auto-instruments LangChain / LangGraph + the Anthropic / OpenAI clients
+# and emits OpenTelemetry GenAI spans; shared/obs.py wires them to a
+# console exporter. Not needed for the default narrated trace.
+# See docs/observability.md.
+otel = [
+    "traceloop-sdk>=0.40.0",
+]
 
 # The repo's first pytest config. Without `testpaths`, bare `pytest` collects
 # from the rootdir down, which would pull in optional-dependency modules even
