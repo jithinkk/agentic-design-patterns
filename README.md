@@ -60,6 +60,22 @@ uv run main.py run react-agent "What is (12 + 8) * 3?"
 uv run main.py run prompt-chaining "Why LangGraph is a good fit for agents"
 ```
 
+`run` prints a **narrated trace** — how many LLM calls, in what shape,
+which branch ran, how many loop turns — from each pattern's
+`run.py::render`:
+
+```
+orchestrator-workers · orchestrator picks the subtask count at runtime → dynamic fan-out via Send
+────────────────────────────────────────────────────────────
+  1. orchestrator (LLM)  → planned 3 subtasks: pricing; onboarding; support quality
+  2. fan-out via Send    → 3 worker runs in parallel (each sees only its own subtask)
+  3. synthesizer (LLM)  → final_report  (worker results merged via the operator.add reducer)
+```
+
+Add `--raw` for the untouched state dict, or `--otel` for the same run as
+an OpenTelemetry GenAI span tree (`uv sync --group otel` first) — see
+[`docs/observability.md`](docs/observability.md).
+
 Or activate the venv and use `python` directly:
 
 ```bash
@@ -99,6 +115,7 @@ agentic-design-patterns/
 ├── docs/
 │   ├── architecture-overview.md   # cross-pattern decision tree + comparison table
 │   ├── harnesses-and-loops.md     # pointer to the essay, now in the ai-harnesses repo
+│   ├── observability.md           # the narrated trace vs. the --otel span tree
 │   └── real-world-examples.md     # the decision tree applied to concrete scenarios
 ├── patterns/
 │   ├── prompt_chaining/
@@ -117,6 +134,8 @@ agentic-design-patterns/
     ├── llm/
     │   ├── factory.py               # get_chat_model(provider=...) — fake / openai / anthropic
     │   └── fake.py                  # FakeChatModel: scripted BaseChatModel, no network needed
+    ├── render.py                    # formatting helpers for each run.py's narrated trace
+    ├── obs.py                       # opt-in OpenTelemetry wiring for `run ... --otel`
     └── tools/
         ├── basic.py                 # calculator, search_docs, word_count, send_message
         └── mcp_server.py            # those same tools served over MCP, for any harness
@@ -124,9 +143,9 @@ agentic-design-patterns/
 
 Every pattern follows the same shape: `graph.py` defines the `StateGraph`
 and its edges, `nodes.py` holds the node functions (each backed by
-`shared.llm.factory.get_chat_model`), `run.py` exposes a `main(...)`
-function the CLI calls into, and `tests/` exercises the graph end to end
-against the fake LLM.
+`shared.llm.factory.get_chat_model`), `run.py` exposes a `main(...)` the
+CLI calls into plus a `render(result)` that narrates the run, and
+`tests/` exercises the graph end to end against the fake LLM.
 
 ### Adding a new pattern
 
@@ -136,8 +155,10 @@ against the fake LLM.
    shape), wired up via `get_chat_model(responder=_fake_responder)`.
 3. Write `graph.py`: a `TypedDict` state and a `build_graph()` that wires
    nodes with `add_edge` / `add_conditional_edges`.
-4. Write `run.py` with a `main(...)` function and a CLI-runnable
-   `if __name__ == "__main__"` block.
+4. Write `run.py` with a `main(...)` function, a `render(result) -> str`
+   that narrates the pattern's mechanic (use `shared.render` helpers), and
+   a CLI-runnable `if __name__ == "__main__"` block that prints
+   `render(main(...))`.
 5. Add tests in `tests/test_<name>.py` and register the pattern in
    `main.py`'s `PATTERNS` dict.
 

@@ -2,10 +2,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from langchain_core.messages import HumanMessage  # noqa: E402
+from langchain_core.messages import AIMessage, HumanMessage, ToolMessage  # noqa: E402
 from langgraph.types import Command  # noqa: E402
 
 from patterns.human_in_the_loop.graph import build_graph  # noqa: E402
+from shared.render import block, header, step, truncate  # noqa: E402
 
 DEFAULT_TASK = "Send a message to Alice: the report is ready."
 
@@ -44,18 +45,44 @@ def main(
     return {"interrupted": True, "pending": pending_interrupts[0].value, "approved": approve, "result": resumed}
 
 
+def render(outcome: dict) -> str:
+    """Narrate `react_agent`'s loop plus the approval gate: a side-effecting
+    tool call pauses the graph (`interrupt()`) until a human decides, and
+    resume is a *separate* `invoke()` call carrying that decision."""
+    lines = [header("human-in-the-loop", "react loop + an approval gate before any side-effecting tool")]
+
+    if not outcome["interrupted"]:
+        lines.append(step("no gated tool was called → ran straight through, exactly like react_agent"))
+    else:
+        pending = outcome["pending"]
+        calls = pending.get("tool_calls", []) if isinstance(pending, dict) else []
+        for tc in calls:
+            args = ", ".join(f"{k}={v!r}" for k, v in tc.get("args", {}).items())
+            lines.append(step(f"agent → tool call: {tc.get('name')}({args})"))
+        verdict = "APPROVED" if outcome["approved"] else "DENIED"
+        lines.append(step(f"gate  → needs approval → PAUSED (interrupt())"))
+        lines.append(step(f"        human decision: {verdict}   [delivered by a second invoke(Command(resume=…))]"))
+        if not outcome["approved"]:
+            lines.append(step("        tool skipped; a denial ToolMessage goes back to the agent"))
+
+    for msg in outcome["result"]["messages"]:
+        if isinstance(msg, AIMessage) and msg.tool_calls:
+            continue
+        if isinstance(msg, ToolMessage):
+            lines.append(step(f"tools → observation: {truncate(msg.content, 60)}"))
+        elif isinstance(msg, AIMessage) and msg.content:
+            lines.append(step(f"agent → answer: {truncate(msg.content, 60)}"))
+
+    lines.append(block("final messages", "\n".join(
+        f"[{m.__class__.__name__.replace('Message', '')}] {m.content}"
+        for m in outcome["result"]["messages"]
+        if m.content  # the tool-call AIMessage has empty content; the trace above already showed it
+    )))
+    return "\n".join(lines)
+
+
 if __name__ == "__main__":
     import sys
 
     task = " ".join(sys.argv[1:]) or DEFAULT_TASK
-    outcome = main(task)
-
-    if not outcome["interrupted"]:
-        print("No approval needed for this request.\n")
-    else:
-        print(f"Paused for approval: {outcome['pending']}")
-        print(f"Auto-{'approved' if outcome['approved'] else 'denied'} for this demo run.\n")
-
-    for message in outcome["result"]["messages"]:
-        role = message.__class__.__name__.replace("Message", "")
-        print(f"[{role}] {message.content}")
+    print(render(main(task)))
